@@ -1,14 +1,27 @@
 # Big Earl's — Deadlock Gorge
 
+### An unofficial, fan-made recreation of the **Overwatch Route 66** map
+
+**复刻《守望先锋》66 号地图中的 Big Earl's 24 小时加油站与 Deadlock Gorge 峡谷场景。**
+
 **by DeepSeek-V4.1-flash 🐳**
 
 **Three.js r170 · single scene · six cinema shots · 100% procedural**
 
 [**Live preview**](https://cl0ud-99.github.io/big-earls/) — runs in the browser, nothing to install.
 
-A real-time Route 66 24-hour gas station in a desert canyon: blue-hour light, wet asphalt, hand-painted signs, a water tower, a fenced work yard and a roadside picnic pull-out. No imported models, no texture files, no audio samples — every surface, sign, mesa, prop and sound is generated procedurally at load time.
+A real-time, from-scratch recreation of the **Overwatch Route 66** map's roadside stop — Big Earl's 24-hour gas station at Deadlock Gorge. Blue-hour light, wet asphalt, hand-painted signs, a water tower, a fenced work yard and a roadside picnic pull-out. No imported models, no texture files, no audio samples and no Blizzard assets — every surface, sign, mesa, prop and sound is generated procedurally at load time.
+
 
 ![hero](docs/shots/hero.jpg)
+
+## The Overwatch Route 66 recreation
+
+This project is a fan reconstruction of the **Route 66** payload map in **Overwatch** — specifically the Big Earl's 24-hour gas station at Deadlock Gorge and the canyon road around it. The target is the map's stylized realism, not a photoreal American gas station: chunky silhouettes, cream/teal/rust paint, hand-lettered signage, a low sun over red sandstone, and a foreground that reads as a playable space rather than a photograph.
+
+The layout follows the map's roadside stop: the canopy and twin pump islands, the GAS pylon, the roof sign and the Welcome to Deadlock Gorge billboard; the low office and service bays behind; the water tower on the left shoulder; the fenced work yard; and the desert road with its guardrail and picnic pull-out. The scene is deliberately one map location — the detail budget goes into materials, lighting and set dressing instead of spreading across a larger world.
+
+No Blizzard geometry, textures, audio or other game assets are used. Every mesh, sign, texture and sound in this repository is generated procedurally from code.
 
 ## Views
 
@@ -18,7 +31,7 @@ A real-time Route 66 24-hour gas station in a desert canyon: blue-hour light, we
 
 ## What it is
 
-A single-page Three.js r170 application with three ways to see the same location: a six-shot, 63-second PV timeline; an orbit/explore camera; and a free-fly / first-person walk mode with collisions, jumping and footsteps. The scene is deliberately one place — a filling station at the edge of Deadlock Gorge — with the detail budget spent on materials, lighting and set dressing rather than map size.
+A single-page Three.js r170 application with three ways to see the same location: a six-shot, 63-second PV timeline; an orbit/explore camera; and a free-fly / first-person walk mode with collisions, jumping and footsteps. The scene is deliberately one place — the Overwatch Route 66 stop at the edge of Deadlock Gorge — with the detail budget spent on materials, lighting and set dressing rather than map size.
 
 `src/` is the whole program:
 
@@ -111,7 +124,7 @@ The site is served by GitHub Pages from `main` → `/docs`. `docs/index.html` is
 
 ## Notes on the look
 
-The palette is deliberately sun-bleached rather than neutral: cream signage, teal steel, rust-red accents and a lot of warm bounce from the canyon walls. Materials are stylised PBR, not photoreal — clearcoat on the truck, slightly rough chrome, dusty concrete, painted wood.
+The target is the **Overwatch Route 66** read: sun-bleached cream signage, teal steel, rust-red accents and a lot of warm bounce from the canyon walls, with chunky stylized silhouettes rather than photoreal grime. Materials are stylized PBR, not photoreal — clearcoat on the truck, slightly rough chrome, dusty concrete, painted wood.
 
 The sun sits low and to the right, which puts the canopy edge and the pump bodies into rim light while the service bay stays in cool shade. The fill light is warm; the rim light is cold. At night the practicals take over: the canopy tubes, the office ceiling, the sign bulbs, the work-yard floodlight and the red tower beacon.
 
@@ -122,6 +135,10 @@ No black cloud sprites, no cursor artefacts: the V3 build hides the OS cursor ov
 ## Screenshots
 
 `docs/shots/` holds the two views above, captured from the current V3 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
+
+## Disclaimer
+
+Unofficial fan project. **Overwatch** and **Route 66** are trademarks of Blizzard Entertainment. This project is not affiliated with, endorsed by, or sponsored by Blizzard. No game assets are included; all geometry, textures, signs, lighting and audio are procedurally generated from code.
 
 ---
 
