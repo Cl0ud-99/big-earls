@@ -1,0 +1,24 @@
+{
+  "name": "bigearls-pv",
+  "version": "1.0.0",
+  "description": "Real-time Route 66 desert gas station — Three.js cinematic scene, six-shot PV, free-fly and first-person modes.",
+  "main": "index.js",
+  "keywords": [],
+  "author": "Cl0ud-99",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "watch": "node tools/build.mjs --watch",
+    "serve": "python -m http.server 5178 --bind 127.0.0.1",
+    "shot": "node tools/shot.mjs",
+    "pack": "node tools/standalone.mjs",
+    "standalone": "node tools/standalone.mjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "fontkit": "^2.0.4",
+    "puppeteer-core": "^25.16.0",
+    "three": "^0.170.0"
+  }
+}

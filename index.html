@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>BIG EARL'S — Deadlock Gorge · Route 66</title>
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+
+  <div id="letterbox" aria-hidden="true"><div class="bar top"></div><div class="bar bottom"></div></div>
+
+  <header id="hud-top" class="hud">
+    <div class="brand">
+      <div class="eyebrow"><span class="dot"></span> ROUTE 66 · ARIZONA · V3</div>
+      <h1>BIG EARL'S</h1>
+      <div class="sub">24 HOUR SERVICE <span class="sep">/</span> DEADLOCK GORGE</div>
+    </div>
+    <div class="top-right">
+      <button id="btn-clean" class="ghost-btn" title="Hide interface (H)">CLEAN VIEW</button>
+      <button id="btn-sound" class="ghost-btn" title="Ambient sound">SOUND OFF</button>
+    </div>
+  </header>
+
+  <div id="shot-hud" class="hud">
+    <div class="shot-index"><span id="shot-num">01</span><span class="slash">/</span><span id="shot-total">06</span></div>
+    <div class="shot-meta">
+      <div id="shot-label">ARRIVAL</div>
+      <div class="shot-progress"><i id="shot-bar"></i></div>
+    </div>
+    <div id="timecode">00:00:00:00</div>
+  </div>
+
+  <div id="controls" class="hud">
+    <div class="control-group">
+      <button id="btn-play" class="icon-btn" title="Play / pause (Space)" aria-label="Play">
+        <svg viewBox="0 0 16 16" class="ico-pause"><rect x="3.5" y="2.5" width="3" height="11" rx=".4"/><rect x="9.5" y="2.5" width="3" height="11" rx=".4"/></svg>
+        <svg viewBox="0 0 16 16" class="ico-play"><path d="M4 2.4v11.2L13.4 8z"/></svg>
+      </button>
+      <div class="shot-dots" id="shot-dots"></div>
+    </div>
+    <div class="control-group mode-group">
+      <button id="btn-cinema" class="tab active">CINEMA</button>
+      <button id="btn-explore" class="tab">EXPLORE</button>
+      <button id="btn-fly" class="tab">FLY</button>
+      <button id="btn-walk" class="tab">WALK</button>
+    </div>
+    <div class="control-group time-group">
+      <span class="mini-label">GOLDEN HOUR</span>
+      <input id="time-slider" type="range" min="0" max="100" value="6" step=".1" aria-label="Time of day"/>
+      <span class="mini-label dusk">DUSK</span>
+    </div>
+    <div class="control-group">
+      <button id="btn-quality" class="ghost-btn">QUALITY: HIGH</button>
+      <button id="btn-shots" class="ghost-btn only-mobile">SHOTS</button>
+    </div>
+  </div>
+
+  <div id="shot-picker" class="hud">
+    <div class="picker-inner" id="picker-inner"></div>
+  </div>
+
+  <div id="hint" class="hud">
+    <span><b>DRAG</b> LOOK</span><span><b>SCROLL</b> ZOOM</span><span><b>1–6</b> SHOTS</span><span><b>SPACE</b> PLAY/PAUSE</span><span><b>H</b> CLEAN</span>
+  </div>
+
+  <div id="look-hint" aria-hidden="true">
+    <div class="lh-kicker">FREE ROAM</div>
+    <div class="lh-title">CLICK TO LOOK</div>
+    <div class="lh-sub">WASD WALK · SHIFT RUN · SPACE JUMP</div>
+  </div>
+  <div id="crosshair" aria-hidden="true"><i></i></div>
+
+  <div id="title-card">
+    <div class="tc-inner">
+      <div class="tc-kicker">A DESERT STORY</div>
+      <div class="tc-title">DEADLOCK<br>GORGE</div>
+      <div class="tc-rule"><i></i><span>ROUTE 66</span><i></i></div>
+      <div class="tc-sub">BIG EARL'S <span>·</span> 24 HOUR SERVICE</div>
+    </div>
+  </div>
+
+  <div id="end-card">
+    <div class="ec-inner">
+      <div class="ec-kicker">NEXT EXIT · 2 MILES</div>
+      <div class="ec-title">BIG EARL'S</div>
+      <div class="ec-sub">GAS · REPAIRS · FOOD · NO REFUNDS</div>
+      <div class="ec-actions">
+        <button id="btn-replay" class="solid-btn">REPLAY THE FILM</button>
+        <button id="btn-roam-end" class="ghost-btn">FREE ROAM</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loader">
+    <div class="loader-sun"></div>
+    <div class="loader-inner">
+      <div class="loader-kicker">ROUTE 66 · DEADLOCK GORGE · ARIZONA</div>
+      <div class="loader-logo">Big Earl's</div>
+      <div class="loader-sub">24 HOUR SERVICE</div>
+      <div class="loader-bar"><i id="loader-fill"></i></div>
+      <div class="loader-status"><span id="loader-text">POURING THE ASPHALT</span><span id="loader-pct">0%</span></div>
+    </div>
+    <div class="loader-foot">A REAL-TIME ENVIRONMENT STUDY</div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+<script type="module" src="./dist/app.js"></script>
+</body>
+</html>

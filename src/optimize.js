@@ -1,0 +1,66 @@
+import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// Merge static opaque meshes by material to cut draw calls (shadow + reflection + G-buffer).
+// Skips instanced meshes, transparent/additive surfaces, shaders, and anything marked noMerge.
+export function mergeStatic(scene, roots) {
+  scene.updateMatrixWorld(true);
+  const groups = new Map();
+  const meshes = [];
+
+  for (const root of roots) {
+    root.traverse(o => {
+      if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh) return;
+      let p = o;
+      while (p) {
+        if (p.userData && p.userData.noMerge) return;
+        p = p.parent;
+      }
+      const mat = o.material;
+      if (!mat || Array.isArray(mat)) return;
+      if (mat.transparent || mat.depthWrite === false || mat.blending !== THREE.NormalBlending) return;
+      if (mat.isShaderMaterial) return;
+      const g = o.geometry;
+      if (!g || !g.attributes.position || !g.attributes.normal || !g.attributes.uv) return;
+      if (!g.attributes.color && mat.vertexColors) return;
+      meshes.push(o);
+    });
+  }
+
+  for (const o of meshes) {
+    const g = o.geometry;
+    const attrs = Object.keys(g.attributes).sort().join(',');
+    const key = [o.material.uuid, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0, attrs, g.index ? 1 : 0].join('|');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(o);
+  }
+
+  let before = 0, after = 0;
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    before += list.length;
+    const geos = [];
+    for (const o of list) {
+      const g = o.geometry.clone();
+      g.applyMatrix4(o.matrixWorld);
+      geos.push(g);
+    }
+    let merged;
+    try { merged = mergeGeometries(geos, false); } catch (e) { merged = null; }
+    if (!merged) continue;
+    merged.computeBoundingSphere();
+    merged.computeBoundingBox();
+    const m = new THREE.Mesh(merged, list[0].material);
+    m.castShadow = list[0].castShadow;
+    m.receiveShadow = list[0].receiveShadow;
+    m.name = 'merged:' + (list[0].material.name || list[0].material.type);
+    m.matrixAutoUpdate = false;
+    m.updateMatrix();
+    scene.add(m);
+    for (const o of list) {
+      if (o.parent) o.parent.remove(o);
+    }
+    after++;
+  }
+  return { before, after };
+}
