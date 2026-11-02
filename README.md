@@ -2,8 +2,6 @@
 
 ### An unofficial, fan-made recreation of the **Overwatch Route 66** map
 
-**复刻《守望先锋》66 号地图中的 Big Earl's 24 小时加油站与 Deadlock Gorge 峡谷场景。**
-
 **by DeepSeek-V4.1-flash 🐳**
 
 **Three.js r170 · single scene · six cinema shots · 100% procedural**
