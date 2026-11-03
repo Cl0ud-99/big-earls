@@ -13,6 +13,46 @@ function tex(c, { srgb = true, clamp = true } = {}) {
   t.anisotropy = aniso;
   return t;
 }
+// Sample the alpha silhouette of the wordmark and return a ring of bulb
+// positions just outside the letters. Coordinates are normalized [u, v] with
+// v measured from the top of the canvas.
+function wordBulbOutline(c, { threshold = 170, stepPx = 26, marginPx = 15 } = {}) {
+  const W = c.width, H = c.height;
+  const data = c.getContext('2d').getImageData(0, 0, W, H).data;
+  const cols = [];
+  for (let x = 0; x < W; x += 2) {
+    let top = -1, bottom = -1;
+    for (let y = 0; y < H; y += 2) {
+      if (data[(y * W + x) * 4 + 3] > threshold) {
+        if (top < 0) top = y;
+        bottom = y;
+      }
+    }
+    if (top >= 0) cols.push({ x, top, bottom });
+  }
+  if (cols.length < 20) return [];
+  const topAt = (x) => {
+    let best = null, bestD = 1e9;
+    for (const c of cols) { const d = Math.abs(c.x - x); if (d < bestD) { bestD = d; best = c; } }
+    return best ? best.top : H * 0.5;
+  };
+  const bottomAt = (x) => {
+    let best = null, bestD = 1e9;
+    for (const c of cols) { const d = Math.abs(c.x - x); if (d < bestD) { bestD = d; best = c; } }
+    return best ? best.bottom : H * 0.5;
+  };
+  const minX = cols[0].x, maxX = cols[cols.length - 1].x;
+  const pts = [];
+  const push = (x, y) => pts.push([Math.min(1, Math.max(0, x / W)), Math.min(1, Math.max(0, y / H))]);
+  for (let x = minX; x <= maxX; x += stepPx) push(x, topAt(x) - marginPx);
+  for (let x = maxX; x >= minX; x -= stepPx) push(x, bottomAt(x) + marginPx);
+  const edgeSteps = Math.max(1, Math.round((bottomAt(minX) - topAt(minX) + marginPx * 2) / stepPx));
+  for (let i = 1; i < edgeSteps; i++) push(minX - marginPx, topAt(minX) - marginPx + i * stepPx);
+  const edgeStepsR = Math.max(1, Math.round((bottomAt(maxX) - topAt(maxX) + marginPx * 2) / stepPx));
+  for (let i = 1; i < edgeStepsR; i++) push(maxX + marginPx, topAt(maxX) - marginPx + i * stepPx);
+  return pts;
+}
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -190,6 +230,7 @@ function bigEarls() {
     ctx.beginPath(); ctx.arc(x, y, 0.8 + r() * 2, 0, 7); ctx.fill();
   }
   ctx.restore();
+  S.bigEarlsBulbs = wordBulbOutline(c);
   return tex(c);
 }
 

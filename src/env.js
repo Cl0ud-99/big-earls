@@ -112,10 +112,15 @@ export function buildEnvironment(scene) {
     { x: 62, z: 27.5, h: 9.3, trans: false },
   ];
   const poleTops = [];
+  const poleMat = M.woodDark.clone();
+  poleMat.transparent = true;
+  poleMat.opacity = 1;
+  poleMat.depthWrite = false;
+  registerMat(poleMat, 1, 0, 'opacity');
   for (const p of poleSpecs) {
-    addCylinder(root, 0.15, 0.21, p.h, M.woodDark, p.x, p.h / 2, p.z, { seg: 12 });
-    addBox(root, 2.0, 0.12, 0.14, M.woodDark, p.x, p.h - 0.8, p.z);
-    addBox(root, 1.1, 0.12, 0.14, M.woodDark, p.x, p.h - 1.55, p.z);
+    addCylinder(root, 0.15, 0.21, p.h, poleMat, p.x, p.h / 2, p.z, { seg: 12 });
+    addBox(root, 2.0, 0.12, 0.14, poleMat, p.x, p.h - 0.8, p.z);
+    addBox(root, 1.1, 0.12, 0.14, poleMat, p.x, p.h - 1.55, p.z);
     for (const sx of [-0.75, 0, 0.75]) {
       addCylinder(root, 0.06, 0.07, 0.12, M.paintCream, p.x + sx, p.h - 0.68, p.z, { seg: 8 });
     }
@@ -126,7 +131,10 @@ export function buildEnvironment(scene) {
     addContact(root, p.x, p.z, 1.0, 1.0, 0.35, 0, 0.03);
     poleTops.push({ x: p.x, z: p.z, y: p.h - 0.68 });
   }
-  const wireMat = new THREE.MeshBasicMaterial({ color: 0x0a0806, fog: false });
+  // Overhead wires read as black bars when the camera looks into the night
+  // sky, so they fade out with the light instead of cutting across meteors.
+  const wireMat = new THREE.MeshBasicMaterial({ color: 0x0a0806, fog: false, transparent: true, opacity: 1, depthWrite: false });
+  registerMat(wireMat, 1, 0, 'opacity');
   for (let i = 0; i < poleTops.length - 1; i++) {
     const a = poleTops[i], b = poleTops[i + 1];
     for (const off of [-0.75, 0, 0.75]) {

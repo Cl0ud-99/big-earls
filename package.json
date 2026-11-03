@@ -1,6 +1,6 @@
 {
   "name": "bigearls-pv",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Real-time Route 66 desert gas station — Three.js cinematic scene, six-shot PV, free-fly and first-person modes.",
   "main": "index.js",
   "keywords": [],

@@ -15,22 +15,32 @@ const SHOTS = [
     b: { pos: [11.4, 1.7, 15.2], target: [0.0, 8.0, 3.6], fov: 36 },
   },
   {
-    id: 'service', num: '03', label: 'SERVICE', dur: 9.5, time: [0.28, 0.36], focus: 9.5, aperture: 0.00075,
+    id: 'marquee', num: '03', label: 'MARQUEE', dur: 8.0, time: [0.78, 0.84], focus: 9.5, aperture: 0.0008,
+    a: { pos: [8.8, 8.4, 12.8], target: [0.0, 9.2, 3.8], fov: 40 },
+    b: { pos: [6.0, 8.9, 11.0], target: [0.0, 9.1, 3.8], fov: 38 },
+  },
+  {
+    id: 'gas', num: '04', label: 'GAS PYLON', dur: 7.5, time: [0.28, 0.34], focus: 10.5, aperture: 0.00065,
+    a: { pos: [-9.8, 3.6, 20.6], target: [-17.0, 5.2, 10.0], fov: 42 },
+    b: { pos: [-11.0, 3.3, 18.4], target: [-17.0, 5.3, 10.0], fov: 40 },
+  },
+  {
+    id: 'service', num: '05', label: 'SERVICE', dur: 9.5, time: [0.28, 0.36], focus: 9.5, aperture: 0.00075,
     a: { pos: [7.4, 1.5, 11.0], target: [-0.5, 2.9, 3.6], fov: 40 },
     b: { pos: [4.2, 1.25, 9.2], target: [-1.5, 2.6, 3.2], fov: 41 },
   },
   {
-    id: 'golden', num: '04', label: 'GOLDEN HOUR', dur: 10.5, time: [0.56, 0.68], focus: 20.5, aperture: 0.0003,
+    id: 'golden', num: '06', label: 'GOLDEN HOUR', dur: 10.5, time: [0.56, 0.68], focus: 20.5, aperture: 0.0003,
     a: { pos: [15.5, 3.0, 19.5], target: [-1.0, 4.4, 1.0], fov: 40 },
     b: { pos: [13.0, 2.7, 17.0], target: [-0.5, 4.3, 1.0], fov: 40 },
   },
   {
-    id: 'neon', num: '05', label: 'NEON', dur: 9.5, time: [0.8, 0.86], focus: 9.0, aperture: 0.0008,
+    id: 'neon', num: '07', label: 'NEON', dur: 9.5, time: [0.8, 0.86], focus: 9.0, aperture: 0.0008,
     a: { pos: [-8.0, 1.3, 10.8], target: [1.5, 3.0, 4.0], fov: 44 },
     b: { pos: [-2.0, 1.5, 9.2], target: [1.5, 3.2, 4.0], fov: 44 },
   },
   {
-    id: 'gorge', num: '06', label: 'DEADLOCK GORGE', dur: 12.0, time: [0.9, 0.97], focus: 34, aperture: 0.0002,
+    id: 'gorge', num: '08', label: 'DEADLOCK GORGE', dur: 12.0, time: [0.9, 0.97], focus: 34, aperture: 0.0002,
     a: { pos: [12, 7.0, 30], target: [0, 4.2, 0], fov: 42 },
     b: { pos: [5.0, 9.8, 39], target: [0, 3.6, 0], fov: 44 },
   },
@@ -99,7 +109,7 @@ export function createCinema({ camera, controls, setTime, post, audio, roam, onQ
     } else if (state.exploring) {
       el.hint.innerHTML = '<span><b>DRAG</b> LOOK</span><span><b>SCROLL</b> ZOOM</span><span><b>H</b> CLEAN</span>';
     } else {
-      el.hint.innerHTML = '<span><b>SPACE</b> PLAY/PAUSE</span><span><b>1–6</b> SHOTS</span><span><b>E</b> EXPLORE</span><span><b>H</b> CLEAN</span>';
+      el.hint.innerHTML = '<span><b>SPACE</b> PLAY/PAUSE</span><span><b>1–8</b> SHOTS</span><span><b>E</b> EXPLORE</span><span><b>H</b> CLEAN</span>';
     }
   }
 
@@ -318,7 +328,7 @@ export function createCinema({ camera, controls, setTime, post, audio, roam, onQ
       else if (e.key === 'v' || e.key === 'V') { startWalk(); }
       else if (e.key === 'h' || e.key === 'H') { document.body.classList.toggle('clean'); }
       else if (e.key === 'r' || e.key === 'R') { startShot(0); }
-      else if (e.key >= '1' && e.key <= '6') { startShot(Number(e.key) - 1); }
+      else if (e.key >= '1' && e.key <= '8') { startShot(Number(e.key) - 1); }
       else if (e.key === 's' || e.key === 'S') { el.btnSound.click(); }
     });
   }

@@ -1,4 +1,4 @@
-// Capture the six cinema shots for visual regression.
+// Capture the eight cinema shots for visual regression.
 // Usage: node tools/regression.mjs <url> [prefix]
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
@@ -32,7 +32,7 @@ await page.evaluate(() => {
   }
   document.body.classList.add('clean');
 });
-for (let i = 0; i < 6; i++) {
+for (let i = 0; i < 8; i++) {
   await page.evaluate(i => window.__cinema.jump(i, 0.5), i);
   await new Promise(r => setTimeout(r, 1800));
   const file = path.join(outDir, prefix + '-' + String(i + 1).padStart(2, '0') + '.png');

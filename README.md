@@ -4,7 +4,7 @@
 
 **by DeepSeek-V4.1-flash 🐳**
 
-**v0.0.9 · Three.js r170 · single scene · six cinema shots · 100% procedural**
+**v0.1.0 · Three.js r170 · single scene · eight cinema shots · 100% procedural**
 
 [**Live preview**](https://cl0ud-99.github.io/big-earls/) — runs in the browser, nothing to install.
 
@@ -32,13 +32,13 @@ No Blizzard geometry, textures, audio or other game assets are used. Every mesh,
 
 ## What it is
 
-A single-page Three.js r170 application with three ways to see the same location: a six-shot, 63-second PV timeline; an orbit/explore camera; and a free-fly / first-person walk mode with collisions, jumping and footsteps. The scene is deliberately one place — the Overwatch Route 66 stop at the edge of Deadlock Gorge — with the detail budget spent on materials, lighting and set dressing rather than map size.
+A single-page Three.js r170 application with three ways to see the same location: an eight-shot, ~78-second PV timeline; an orbit/explore camera; and a free-fly / first-person walk mode with collisions, jumping and footsteps. The scene is deliberately one place — the Overwatch Route 66 stop at the edge of Deadlock Gorge — with the detail budget spent on materials, lighting and set dressing rather than map size.
 
 ## About
 
-Big Earl's 0.0.9 is a single-scene procedural diorama and a six-shot short film about one roadside stop at the edge of Deadlock Gorge.
+Big Earl's 0.1.0 is a single-scene procedural diorama and an eight-shot short film about one roadside stop at the edge of Deadlock Gorge.
 
-- **One location, three ways in**: a 63-second, six-shot cinema timeline; an orbit/explore camera; and a first-person walk mode with collision, jumping and footsteps.
+- **One location, three ways in**: a ~78-second, eight-shot cinema timeline; an orbit/explore camera; and a first-person walk mode with collision, jumping and footsteps.
 - **Everything is generated in code**: geometry, signage, painted-metal textures, canvas-labelled props, canyon strata, water, dust and Web Audio ambience. No model files, image textures, HDRIs or audio samples.
 - **Built to be looked at closely**: hero pumps, pickup truck, canopy fascia, roof sign and service bays carry bevels, rivets, brackets, hoses, handles and edge wear; the distant mesas carry the silhouette.
 - **Runs on a 1600×900 budget of roughly 690 draw calls and 2.49M triangles**, with cached shadows, half-rate planar reflections and merged static batches.
@@ -78,12 +78,12 @@ Details worth reading:
 - **Wall and metal reflections** come from a PMREM built from the same procedural sky. The canopy fascia, chrome trim, pump bodies, truck paint and window glass all pick up the horizon and the sign glow; the sign is visible in the wet forecourt as a planar reflection.
 - **The water is a real planar reflection**, not a screen-space approximation: a mirrored camera with an oblique near plane, normal-map perturbation, fresnel and distance fade. Puddles and the canyon creek share the same shader with different opacity and scale.
 - **GTAO runs at half resolution** and is composited before DOF, so contact shadows in the service bay and under the canopy survive the bokeh pass. Its normal/depth prepass skips transparent decals, which cannot contribute meaningful AO.
-- **The six shots are data** — each has its own duration, time-of-day range, camera start/end, FOV, focus distance and aperture. `jump()` can move to any shot for stills or review.
+- **The eight shots are data** — each has its own duration, time-of-day range, camera start/end, FOV, focus distance and aperture. `jump()` can move to any shot for stills or review.
 - **The first-person controller uses simple 2D AABBs and cylinders** for the building, columns, pumps, vehicles, guardrail, bench, water-tower legs and yard fence. It is intentionally cheap so the whole scene stays playable in one tab.
 - **Static meshes are merged by material after construction**, including coplanar transparent decals (contact shadows, rust streaks, road paint). Instanced and animated objects are skipped. Shadow maps are cached and only refreshed while the time-of-day sun is moving; the planar reflection updates on alternate frames and is skipped entirely when the camera is still. Puddles and creek stones are instanced instead of submitted one mesh at a time.
 - **Depth of field reuses GTAO's depth buffer** instead of drawing the scene a second time with a depth material, removing roughly 500 draw calls per frame.
 - **Painted metal shares a procedural paint-detail family**: each paint colour carries its own chips, scratches, normal map and roughness map. Dust settles on the canopy, AC and window ledges; rust gathers along pump edges and the bottoms of the bay doors.
-- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to roughly 690 and roughly double the frame rate, with no visible difference in the six shots.
+- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to roughly 690 and roughly double the frame rate, with no visible difference in the eight shots.
 
 ## The location
 
@@ -114,7 +114,7 @@ npm run standalone     # dist/app.js + style.css + fonts -> BigEarls-PV.html
 npm run serve          # http://127.0.0.1:5178/
 npm run perf           # fps / draw-call benchmark (with serve running)
 npm run calibrate      # reference views + proportion measurements (with serve running)
-npm run regression     # capture all six cinema shots for visual review (with serve running)
+npm run regression     # capture all eight cinema shots for visual review (with serve running)
 ```
 
 The committed playable build lives at `docs/index.html`: one HTML file with the CSS, the JS bundle and all three WOFF2 fonts inlined. It works from `file://` as well as Pages, with no server and no network access.
@@ -124,7 +124,7 @@ The committed playable build lives at `docs/index.html`: one HTML file with the 
 | Input | Action |
 | --- | --- |
 | `Space` / play button | Play / pause the PV |
-| `1` – `6` / `←` `→` | Jump between the six shots |
+| `1` – `8` / `←` `→` | Jump between the eight shots |
 | `E` / EXPLORE | Orbit camera (drag to look, wheel to zoom) |
 | `F` / FLY | Free camera: `WASD`, `Q` / `E` up/down, `Shift` boost; click to capture the pointer |
 | `V` / WALK | First person: `WASD`, `Shift` run, `Space` jump; collisions with the station, props and yard |
@@ -147,11 +147,11 @@ The sun sits low and to the right, which puts the canopy edge and the pump bodie
 
 The water is the same idea: the reflection is sharp in the puddles but the normal map breaks it up just enough to read as standing water rather than a mirror. Red and blue fall off a little faster than green in the creek, so it goes olive rather than cyan.
 
-No black cloud sprites, no cursor artefacts: the v0.0.9 build hides the OS cursor over the canvas, removes the old moon sprite and the flying-bird flock, and leaves the sky to the shader, stars and sun.
+No black cloud sprites, no cursor artefacts: the v0.1.0 build keeps the OS cursor visible outside pointer lock, removes the old moon sprite and the flying-bird flock, and leaves the sky to the shader, stars and sun.
 
 ## Screenshots
 
-`docs/shots/` holds the release views above, captured from the current v0.0.9 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
+`docs/shots/` holds the release views above, captured from the current v0.1.0 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
 
 ## Disclaimer
 
@@ -159,6 +159,6 @@ Unofficial fan project. **Overwatch** and **Route 66** are trademarks of Blizzar
 
 ---
 
-**Status:** v0.0.9 — procedural hero detail pass, paint/wear material family, visual regression verified across all six shots, single-file build verified from `file://`.
+**Status:** v0.1.0 — procedural hero detail pass, paint/wear material family, eight-shot cinema, night sky / marquee / meteor polish, single-file build verified from `file://`.
 
 **Model:** DeepSeek-V4.1-flash. **Stack:** Three.js r170 · esbuild · procedural canvas textures · Web Audio.

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { M, matWithRepeat } from './materials.js';
+import { signTextures as S } from './signs.js';
 import { addBox, addCylinder, addMesh, addPlane, addContact, tube } from './lib/build.js';
 import { makeCanvas, makeTexture } from './textures.js';
 import { surfaceTextures as T } from './textures.js';
@@ -596,6 +597,34 @@ export function buildStation(scene) {
   });
   bulbInst.castShadow = false;
   signGroup.add(bulbInst);
+  // small marquee bulbs outlining the actual "Big Earl's" lettering
+  const wordBulbPositions = (S.bigEarlsBulbs || []).map(([u, v]) => [
+    (u - 0.5) * 11.2,
+    9.15 + (0.5 - v) * 4.16,
+    1.02,
+  ]);
+  if (wordBulbPositions.length) {
+    const wordGeo = new THREE.SphereGeometry(0.032, 8, 6);
+    const wordInst = new THREE.InstancedMesh(wordGeo, M.bulb, wordBulbPositions.length);
+    wordBulbPositions.forEach(([x, y, z], i) => {
+      dummy.position.set(x, y, z);
+      dummy.updateMatrix();
+      wordInst.setMatrixAt(i, dummy.matrix);
+    });
+    wordInst.castShadow = false;
+    signGroup.add(wordInst);
+    const wordPGeo = new THREE.BufferGeometry();
+    wordPGeo.setAttribute('position', new THREE.Float32BufferAttribute(wordBulbPositions.flat(), 3));
+    const wordPMat = new THREE.PointsMaterial({
+      map: T.glow, size: 0.34, color: new THREE.Color(0xffd18a).multiplyScalar(1.5),
+      transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, toneMapped: false,
+    });
+    const wordPoints = new THREE.Points(wordPGeo, wordPMat);
+    wordPoints.renderOrder = 4;
+    signGroup.add(wordPoints);
+    registerOpacity(wordPMat, 0, 0.9);
+  }
   // glow points
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.Float32BufferAttribute(bulbPositions.flat(), 3));
@@ -607,7 +636,7 @@ export function buildStation(scene) {
   points.renderOrder = 4;
   signGroup.add(points);
   registerOpacity(pMat, 0, 0.85);
-  registerOpacity(scriptGlow.material, 0, 0.32);
+  registerOpacity(scriptGlow.material, 0, 0.48);
   // sign spot from canopy
   const signSpot = new THREE.SpotLight(0xffd09a, 0, 22, Math.PI * 0.3, 0.7, 1.3);
   signSpot.position.set(0, 5.15, 8.4);

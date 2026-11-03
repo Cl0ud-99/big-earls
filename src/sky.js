@@ -85,7 +85,7 @@ void main(){
   // faint stars late in the evening
   float starHash = hash21(floor(d.xz * 620.0) + vec2(floor(y * 220.0)));
   float star = smoothstep(0.997, 1.0, starHash);
-  col += vec3(0.85, 0.9, 1.0) * star * smoothstep(0.12, 0.45, y) * smoothstep(0.55, 0.95, uDusk) * 1.6;
+  col += vec3(0.85, 0.9, 1.0) * star * smoothstep(0.12, 0.45, y) * smoothstep(0.55, 0.95, uDusk) * 2.08;
 
   col = mix(uGround, col, smoothstep(-0.075, 0.008, y));
   gl_FragColor = vec4(col, 1.0);
@@ -193,6 +193,35 @@ export class SkySystem {
     this.moon.renderOrder = -950;
     // the old glow sprite showed up as a dark square at dusk on some GPUs
     this.moon.visible = false;
+
+    // occasional shooting stars, spawned every 3–8 seconds at night
+    this.meteorGroup = new THREE.Group();
+    this.meteorGroup.renderOrder = -940;
+    scene.add(this.meteorGroup);
+    this.meteors = [];
+    const meteorGeo = new THREE.PlaneGeometry(1, 1);
+    for (let i = 0; i < 3; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        map: T.glow,
+        color: 0xfff0c8,
+        transparent: true,
+        opacity: 0,
+        alphaTest: 0.01,
+        depthWrite: false,
+        depthTest: true,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+      });
+      const sprite = new THREE.Mesh(meteorGeo, mat);
+      sprite.visible = false;
+      sprite.renderOrder = -940;
+      this.meteorGroup.add(sprite);
+      this.meteors.push({ sprite, active: false, t: 0, dur: 1, start: new THREE.Vector3(), end: new THREE.Vector3() });
+    }
+    this.meteorTimer = 0;
+    this.nextMeteor = 3 + Math.random() * 5;
+    this.camera = null;
 
     // environment scene (same shader, no fog)
     this.envScene = new THREE.Scene();
@@ -309,12 +338,83 @@ export class SkySystem {
     this.scene.environmentIntensity = 0.34;
   }
 
+  spawnMeteor() {
+    if (!this.camera) return;
+    const slot = this.meteors.find(m => !m.active);
+    if (!slot) return;
+    const camera = this.camera;
+    const dir = camera.getWorldDirection(new THREE.Vector3());
+    const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
+    const up = new THREE.Vector3().crossVectors(right, dir).normalize();
+    // Wider launch envelope: anywhere in the forward upper sky, with a
+    // downward-biased but randomly angled trail and occasional slow fireballs.
+    const start = dir.clone().multiplyScalar(280 + Math.random() * 80)
+      .addScaledVector(right, (Math.random() - 0.5) * 360)
+      .addScaledVector(up, 30 + Math.random() * 150);
+    const horizontal = Math.random() < 0.5 ? -1 : 1;
+    const dive = 0.12 + Math.random() * 1.0;
+    const length = 70 + Math.random() * 220;
+    const travel = right.clone().multiplyScalar(horizontal * Math.cos(dive) * length)
+      .addScaledVector(up, -Math.sin(dive) * length);
+    const end = start.clone().add(travel);
+    const p1 = start.clone().add(camera.position).project(camera);
+    const p2 = end.clone().add(camera.position).project(camera);
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    const fireball = Math.random() < 0.15;
+    const sprite = slot.sprite;
+    sprite.position.copy(start);
+    sprite.quaternion.copy(camera.quaternion);
+    sprite.rotateZ(angle);
+    sprite.scale.set(
+      fireball ? 80 + Math.random() * 45 : 38 + Math.random() * 52,
+      fireball ? 4.5 + Math.random() * 2.5 : 1.6 + Math.random() * 2.2,
+      1
+    );
+    sprite.material.color.setHex(fireball ? 0xffd09a : (Math.random() < 0.35 ? 0xe8f0ff : 0xfff0c8));
+    sprite.material.opacity = 1;
+    sprite.visible = true;
+    slot.active = true;
+    slot.t = 0;
+    slot.dur = fireball ? 1.0 + Math.random() * 0.7 : 0.55 + Math.random() * 0.8;
+    slot.start.copy(start);
+    slot.end.copy(end);
+  }
+
   update(dt) {
     this.uniforms.uTime.value += dt;
+    const dusk = this.uniforms.uDusk.value;
+    if (!this.camera || dusk < 0.35) {
+      this.meteorGroup.visible = false;
+      this.meteorTimer = 0;
+      return;
+    }
+    this.meteorGroup.visible = true;
+    this.meteorTimer += dt;
+    if (this.meteorTimer >= this.nextMeteor) {
+      this.spawnMeteor();
+      // Occasionally a second meteor cuts across at the same time.
+      if (Math.random() < 0.28) this.spawnMeteor();
+      this.meteorTimer = 0;
+      this.nextMeteor = 3 + Math.random() * 5;
+    }
+    for (const m of this.meteors) {
+      if (!m.active) continue;
+      m.t += dt;
+      const p = Math.min(1, m.t / m.dur);
+      const e = 1 - (1 - p) * (1 - p);
+      m.sprite.position.lerpVectors(m.start, m.end, e);
+      m.sprite.material.opacity = 1 - p;
+      if (p >= 1) {
+        m.active = false;
+        m.sprite.visible = false;
+      }
+    }
   }
 
   followCamera(camera) {
+    this.camera = camera;
     this.mesh.position.copy(camera.position);
+    this.meteorGroup.position.copy(camera.position);
   }
 
   setQuality(q) {
