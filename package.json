@@ -12,6 +12,8 @@
     "watch": "node tools/build.mjs --watch",
     "serve": "python -m http.server 5178 --bind 127.0.0.1",
     "shot": "node tools/shot.mjs",
+    "perf": "node tools/perf.mjs",
+    "calibrate": "node tools/calibrate.mjs",
     "pack": "node tools/standalone.mjs",
     "standalone": "node tools/standalone.mjs"
   },

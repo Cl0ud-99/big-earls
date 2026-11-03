@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Big Earl's — Reference & Proportion Board</title>
+<style>
+  :root {
+    --bg: #14100c;
+    --panel: #1d1712;
+    --line: #3e3023;
+    --cream: #efe0bc;
+    --muted: #a8987c;
+    --yellow: #e6b85c;
+    --teal: #5f9e99;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--cream);
+    font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+  }
+  header {
+    padding: 28px 34px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  h1 { margin: 0; font: 34px/1 "Bebas Neue", Impact, sans-serif; letter-spacing: .04em; color: var(--yellow); }
+  .sub { color: var(--muted); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; margin-top: 6px; }
+  .hint { color: var(--muted); max-width: 390px; font-size: 12px; text-align: right; }
+  main { padding: 24px 34px 60px; max-width: 1440px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } header { display:block; } .hint { text-align:left; margin-top:12px; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 2px; overflow: hidden;
+  }
+  .stage { position: relative; background: #0b0907; aspect-ratio: 16 / 10; overflow: hidden; }
+  .stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .stage .current { opacity: 1; }
+  .stage .reference { opacity: .5; pointer-events: none; }
+  .stage .reference:not([src]) { display: none; }
+  .badge {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    background: rgba(20,16,12,.8); border: 1px solid var(--line);
+    color: var(--muted); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    padding: 5px 8px;
+  }
+  .controls { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line); }
+  .controls label { color: var(--teal); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+  .controls input[type="range"] { flex: 1; accent-color: var(--yellow); }
+  .controls span { color: var(--muted); font-size: 11px; min-width: 32px; text-align: right; }
+  .meta { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px 16px; }
+  .meta b { font-size: 15px; color: var(--cream); }
+  .meta small { color: var(--muted); display: block; margin-top: 3px; font-size: 11px; }
+  .table { margin-top: 26px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .table h2 { font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--yellow); margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  td:not(:first-child) { font-variant-numeric: tabular-nums; color: #d8c8a8; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 18px; max-width: 780px; }
+  code { color: var(--yellow); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Big Earl's · Reference Board</h1>
+    <div class="sub">Route 66 / Deadlock Gorge · proportion calibration</div>
+  </div>
+  <div class="hint">Load a reference screenshot into any card and drag the slider to blend it over the current render. Reference images are kept local; nothing is uploaded.</div>
+</header>
+<main>
+  <div class="grid">
+    <figure class="card" data-view="front">
+      <div class="stage">
+        <span class="badge">Current · front</span>
+        <img class="current" src="current/front.jpg" alt="Current front elevation" />
+        <img class="reference" alt="Reference front elevation" />
+      </div>
+      <div class="controls"><label>Load reference<input type="file" accept="image/*" hidden /></label><input type="range" min="0" max="100" value="50" /><span>50%</span></div>
+      <div class="meta"><div><b>Front elevation</b><small>camera y = 5.4 m · fov 22°</small></div></div>
+    </figure>
+
+    <figure class="card" data-view="side">
+      <div class="stage">
+        <span class="badge">Current · side</span>
+        <img class="current" src="current/side.jpg" alt="Current side elevation" />
+        <img class="reference" alt="Reference side elevation" />
+      </div>
+      <div class="controls"><label>Load reference<input type="file" accept="image/*" hidden /></label><input type="range" min="0" max="100" value="50" /><span>50%</span></div>
+      <div class="meta"><div><b>Left elevation</b><small>camera x = -42 m · fov 22°</small></div></div>
+    </figure>
+
+    <figure class="card" data-view="top">
+      <div class="stage">
+        <span class="badge">Current · top</span>
+        <img class="current" src="current/top.jpg" alt="Current top view" />
+        <img class="reference" alt="Reference top view" />
+      </div>
+      <div class="controls"><label>Load reference<input type="file" accept="image/*" hidden /></label><input type="range" min="0" max="100" value="50" /><span>50%</span></div>
+      <div class="meta"><div><b>Top / roof layout</b><small>high oblique · fov 30°</small></div></div>
+    </figure>
+
+    <figure class="card" data-view="hero">
+      <div class="stage">
+        <span class="badge">Current · hero</span>
+        <img class="current" src="current/hero.jpg" alt="Current hero view" />
+        <img class="reference" alt="Reference hero view" />
+      </div>
+      <div class="controls"><label>Load reference<input type="file" accept="image/*" hidden /></label><input type="range" min="0" max="100" value="50" /><span>50%</span></div>
+      <div class="meta"><div><b>3/4 hero</b><small>camera [20, 24, 46] · fov 32°</small></div></div>
+    </figure>
+  </div>
+
+  <section class="table">
+    <h2>Current measured bounds · meters</h2>
+    <table>
+      <thead><tr><th>Landmark</th><th>X</th><th>Y</th><th>Z</th><th>Reference / note</th></tr></thead>
+      <tbody>
+        <tr><td>Station overall</td><td>20.04</td><td>11.45</td><td>17.05</td><td>includes roof sign</td></tr>
+        <tr><td>Canopy</td><td>19.81</td><td>5.05</td><td>7.50</td><td>underside ≈ 4.04 m</td></tr>
+        <tr><td>Roof sign</td><td>12.15</td><td>6.78</td><td>0.89</td><td>with service ladder; top = 11.40 m</td></tr>
+        <tr><td>Water tower</td><td>6.27</td><td>12.24</td><td>6.05</td><td>top = 12.24 m</td></tr>
+        <tr><td>Pump island</td><td>3.36</td><td>3.23</td><td>1.76</td><td>centers 6.3 m apart</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Regenerate with <code>npm run calibrate</code>. Measurements come from <code>window.__measure()</code> before static mesh merging, so they describe the authored scene rather than the batched draw geometry.</p>
+  </section>
+</main>
+<script>
+  for (const card of document.querySelectorAll('.card')) {
+    const input = card.querySelector('input[type=file]');
+    const range = card.querySelector('input[type=range]');
+    const out = card.querySelector('.controls span');
+    const ref = card.querySelector('.reference');
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      ref.src = URL.createObjectURL(file);
+      ref.style.opacity = range.value / 100;
+    });
+    range.addEventListener('input', () => {
+      ref.style.opacity = range.value / 100;
+      out.textContent = range.value + '%';
+    });
+  }
+</script>
+</body>
+</html>

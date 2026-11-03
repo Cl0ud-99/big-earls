@@ -132,8 +132,23 @@ export function createPump(premium = false) {
     for (const x of [-0.29, 0.29]) addBox(g, 0.022, 1.66, 0.012, M.chromeRough, x, 1.02, z, { cast: false });
     for (const y of [0.22, 1.82]) addBox(g, 0.6, 0.022, 0.012, M.chromeRough, 0, y, z, { cast: false });
   }
-  // side chrome strip
-  for (const x of [-0.335, 0.335]) addBox(g, 0.02, 1.62, 0.02, M.chromeRough, x, 1.05, 0, { cast: false });
+  // side chrome strip + recessed side panels
+  for (const x of [-0.335, 0.335]) {
+    addBox(g, 0.02, 1.62, 0.02, M.chromeRough, x, 1.05, 0, { cast: false });
+    addBox(g, 0.012, 1.12, 0.34, M.metalTeal, x * 1.04, 1.05, 0, { cast: false });
+    addBox(g, 0.024, 0.16, 0.38, M.chromeRough, x * 1.05, 1.68, 0, { cast: false });
+  }
+  // raised chrome meter frame on both faces
+  for (const z of [0.262, -0.262]) {
+    for (const x of [-0.2, 0.2]) addBox(g, 0.018, 0.28, 0.012, M.chromeRough, x, 1.44, z, { cast: false });
+    for (const y of [1.3, 1.58]) addBox(g, 0.4, 0.018, 0.012, M.chromeRough, 0, y, z, { cast: false });
+  }
+  // cast shoulder cap and hose retractor arm
+  addBox(g, 0.72, 0.07, 0.54, M.paintRed, 0, 1.99, 0, { radius: 0.03 });
+  addBox(g, 0.72, 0.022, 0.54, M.chromeRough, 0, 1.84, 0, { cast: false });
+  addCylinder(g, 0.035, 0.035, 0.42, M.darkMetal, -0.27, 1.53, 0.02, { rz: Math.PI / 2, seg: 10 });
+  addBox(g, 0.1, 0.12, 0.14, M.chromeRough, -0.47, 1.53, 0.02, { radius: 0.02 });
+  addBox(g, 0.055, 0.14, 0.18, M.darkMetal, 0.35, 0.78, 0.02, { cast: false });
   // top globe
   addCylinder(g, 0.1, 0.13, 0.16, M.chrome, 0, 2.04, 0, { seg: 18 });
   const globeMat = new THREE.MeshPhysicalMaterial({
@@ -177,6 +192,7 @@ export function addPump(parent, x, z, rot = 0, premium = false) {
 
 export function createPumpIsland(x, z, premiumIndex = -1) {
   const g = new THREE.Group();
+  g.name = 'pumpIsland';
   g.position.set(x, 0, z);
   addBox(g, 3.3, 0.2, 1.7, M.concrete, 0, 0.12, 0, { radius: 0.04 });
   addBox(g, 3.36, 0.04, 1.76, M.paintYellow, 0, 0.225, 0, { radius: 0.01, cast: false });
@@ -503,9 +519,19 @@ export function createPickup() {
     }));
     lens.scale.set(0.5, 1, 1); lens.position.set(2.49, 1.18, z); g.add(lens);
   }
-  // bumpers
+  // grille surround, badge and headlight bezels
+  addBox(g, 0.035, 0.5, 1.28, M.chromeRough, 2.505, 1.06, 0, { radius: 0.02, cast: false });
+  addBox(g, 0.025, 0.08, 0.42, M.goldPaint, 2.525, 1.2, 0, { cast: false });
+  for (const z of [-0.62, 0.62]) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.015, 6, 18), M.chromeRough);
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(2.5, 1.18, z);
+    g.add(ring);
+  }
+  // bumpers + front overriders
   addBox(g, 0.12, 0.16, 1.98, M.chrome, 2.56, 0.82, 0, { radius: 0.04 });
   addBox(g, 0.12, 0.16, 1.98, M.chrome, -2.53, 0.82, 0, { radius: 0.04 });
+  for (const z of [-0.62, 0.62]) addBox(g, 0.07, 0.32, 0.08, M.chromeRough, 2.6, 0.76, z, { radius: 0.02 });
   // wheel arches
   for (const x of [-1.35, 1.4]) for (const z of [-0.9, 0.9]) {
     const arch = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.15, 8, 16, Math.PI), body);
@@ -523,12 +549,20 @@ export function createPickup() {
     white.position.set(x, 0.52, z + (z > 0 ? 0.14 : -0.14));
     g.add(white);
   }
-  // mirrors, handles, door seams
+  // mirrors, handles, door seams, fuel cap and tailgate hardware
   for (const z of [-0.87, 0.87]) {
     addBox(g, 0.03, 0.04, 0.22, M.chromeRough, 1.0, 1.45, z + (z > 0 ? 0.08 : -0.08), { cast: false });
+    addBox(g, 0.06, 0.14, 0.18, M.chromeRough, 1.06, 1.5, z + (z > 0 ? 0.08 : -0.08), { radius: 0.02, cast: false });
     addBox(g, 0.14, 0.03, 0.04, M.chromeRough, 0.4, 1.36, z + (z > 0 ? 0.06 : -0.06), { cast: false });
     addBox(g, 0.02, 0.55, 0.01, M.darkMetal, 0.4, 1.42, z + (z > 0 ? 0.04 : -0.04), { cast: false });
   }
+  addBox(g, 0.02, 0.06, 0.32, M.chromeRough, -2.42, 1.55, 0, { cast: false });
+  addCylinder(g, 0.07, 0.07, 0.025, M.chromeRough, -0.85, 1.0, 0.885, { rx: Math.PI / 2, seg: 12 });
+  // bed stake pockets and exhaust tip
+  for (const z of [-0.87, 0.87]) for (const x of [-2.15, -1.55, -0.95]) {
+    addBox(g, 0.06, 0.22, 0.035, M.darkMetal, x, 1.58, z, { cast: false });
+  }
+  addCylinder(g, 0.04, 0.04, 1.0, M.darkMetal, -2.05, 0.35, 0.62, { rx: Math.PI / 2, seg: 10 });
   // rust patches
   for (const z of [-0.87, 0.87]) {
     addBox(g, 1.8, 0.03, 0.02, rust, -0.5, 0.77, z + (z > 0 ? 0.02 : -0.02), { cast: false });

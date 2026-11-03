@@ -140,11 +140,21 @@ export function buildStation(scene) {
     addCylinder(root, 0.16, 0.16, w - 0.3, M.corrugated, cx, 3.22, -0.28, { seg: 18, rz: Math.PI / 2 });
     for (const x of [x0 + 0.1, x1 - 0.1]) {
       addBox(root, 0.07, 3.3, 0.07, M.darkMetal, x, 1.65, -0.18);
+      for (const y of [0.45, 1.55, 2.75]) addBox(root, 0.17, 0.07, 0.12, M.darkMetal, x, y, -0.15, { cast: false });
+      addBox(root, 0.11, 0.11, 0.15, M.paintCream, x, 0.33, -0.24, { cast: false });
+    }
+    // drum end caps and door guide brackets
+    for (const x of [x0 + 0.18, x1 - 0.18]) {
+      addCylinder(root, 0.17, 0.17, 0.06, M.darkMetal, x, 3.22, -0.28, { seg: 14, rz: Math.PI / 2 });
     }
     // partial door
     if (premium) {
       addBox(root, w - 0.4, 0.8, 0.07, M.corrugated, cx, 2.85, -0.3);
       addBox(root, w - 0.4, 0.06, 0.1, M.darkMetal, cx, 2.45, -0.29);
+      // visible slat seams, bottom rubber seal and lift handles
+      for (let i = 0; i < 6; i++) addBox(root, w - 0.42, 0.022, 0.075, M.darkMetal, cx, 2.52 + i * 0.115, -0.295, { cast: false });
+      addBox(root, w - 0.42, 0.075, 0.1, M.rubber, cx, 2.44, -0.295, { cast: false });
+      for (const x of [cx - w * 0.3, cx + w * 0.3]) addBox(root, 0.28, 0.045, 0.05, M.chromeRough, x, 2.62, -0.265, { cast: false });
     }
     // hanging shop lamp
     const lampY = 2.72;
@@ -248,14 +258,24 @@ export function buildStation(scene) {
   for (let i = 0; i < 7; i++) {
     addBox(root, 2.32, 0.022, 0.015, M.paintCream, -0.1, 2.38 + i * 0.068, -0.16, { cast: false });
   }
-  // door
+  // door: frame, hinges, closer, kick plate and handle
   addPlane(root, 0.8, 2.3, M.glassWarm, -2.15, 1.15, -0.1, { cast: false });
   for (const x of [-2.55, -1.75]) addBox(root, 0.08, 2.38, 0.14, frameMat, x, 1.19, 0.0);
   addBox(root, 0.88, 0.08, 0.14, frameMat, -2.15, 2.34, 0.0);
   addBox(root, 0.06, 1.9, 0.03, M.darkMetal, -1.83, 1.1, 0.06);
   addCylinder(root, 0.018, 0.018, 0.16, M.chrome, -1.34, 1.05, 0.08, { rx: Math.PI / 2, seg: 8 });
+  for (const y of [0.42, 1.15, 1.88]) addBox(root, 0.09, 0.16, 0.035, M.chromeRough, -2.51, y, 0.055, { cast: false });
+  addBox(root, 0.76, 0.18, 0.012, M.darkMetal, -2.15, 0.28, 0.045, { cast: false });
+  addBox(root, 0.52, 0.055, 0.07, M.chromeRough, -1.9, 2.23, 0.1, { cast: false });
+  addCylinder(root, 0.012, 0.012, 0.38, M.darkMetal, -2.28, 2.24, 0.08, { rz: Math.PI / 2, seg: 6, cast: false });
   addBox(root, 1.4, 0.13, 0.6, M.concrete, -2.15, 0.08, 0.24, { cast: true });
   addContact(root, -2.15, 0.4, 1.7, 0.8, 0.35, 0, 0.03);
+  // office pendant lamp above the counter
+  addCylinder(root, 0.012, 0.012, 0.45, M.darkMetal, -0.5, 2.9, -1.45, { seg: 6, cast: false });
+  const officeShade = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.28, 0.16, 18, 1, true), M.paintTeal);
+  officeShade.position.set(-0.5, 2.65, -1.45);
+  officeShade.material.side = THREE.DoubleSide;
+  root.add(officeShade);
   // window decal
   addPlane(root, 1.05, 0.26, M.windowDecal, -0.3, 1.3, 0.03, { cast: false, transparent: true });
   // OPEN neon
@@ -326,6 +346,7 @@ export function buildStation(scene) {
 
   // ---------------------------------------------------- canopy
   const canopy = new THREE.Group();
+  canopy.name = 'canopy';
   root.add(canopy);
   addBox(canopy, 19.5, 0.18, 7.5, canopyFascia, 0, 4.93, 3.0);
   addBox(canopy, 19.4, 0.12, 7.3, canopyUnderMat, 0, 4.04, 3.0, { cast: false });
@@ -334,6 +355,13 @@ export function buildStation(scene) {
   addBox(canopy, 19.5, 0.16, 0.27, canopyStripe, 0, 4.3, 6.58);
   addBox(canopy, 19.5, 0.055, 0.28, M.chrome, 0, 4.16, 6.58);
   addBox(canopy, 19.5, 0.055, 0.28, M.chromeRough, 0, 4.91, 6.58);
+  // gutter lip and downspouts at both columns
+  addBox(canopy, 19.72, 0.08, 0.14, M.darkMetal, 0, 4.02, 6.67, { cast: false, receive: false });
+  for (const s of [-1, 1]) {
+    addCylinder(canopy, 0.055, 0.055, 3.75, M.darkMetal, s * 9.55, 2.08, 6.63, { seg: 10, cast: false });
+    addCylinder(canopy, 0.055, 0.055, 0.38, M.darkMetal, s * 9.55, 0.24, 6.44, { rx: Math.PI / 2, seg: 10 });
+    addCylinder(canopy, 0.065, 0.065, 0.12, M.chromeRough, s * 9.55, 3.98, 6.63, { seg: 10, cast: false });
+  }
   // riveted panel seams and a red pinstripe
   for (let i = 0; i < 10; i++) {
     const x = -8.775 + i * 1.95;
@@ -351,9 +379,17 @@ export function buildStation(scene) {
     addBox(canopy, 0.27, 0.16, 7.5, canopyStripe, s * 9.62, 4.3, 3.0);
     addBox(canopy, 0.28, 0.055, 7.5, M.chrome, s * 9.62, 4.16, 3.0);
   }
-  // underside beams
+  // underside beams: cross beams plus two longitudinal spine beams
   for (const x of [-7.6, -4.6, -1.6, 1.6, 4.6, 7.6]) {
     addBox(canopy, 0.16, 0.17, 7.1, canopyFascia, x, 3.96, 3.0, { cast: false });
+  }
+  for (const z of [1.7, 4.55]) {
+    addBox(canopy, 18.85, 0.14, 0.14, M.darkMetal, 0, 3.99, z, { cast: false });
+  }
+  // diagonal knee braces from the columns into the canopy frame
+  for (const s of [-1, 1]) {
+    tube([[s * 9.15, 3.45, 5.84], [s * 8.42, 3.96, 5.84]], 0.045, M.darkMetal, canopy, 10, 5);
+    tube([[s * 9.15, 3.45, 5.66], [s * 8.42, 3.96, 5.66]], 0.045, M.darkMetal, canopy, 10, 5);
   }
   // light fixtures
   const fixturePositions = [];
@@ -372,9 +408,12 @@ export function buildStation(scene) {
   registerOpacity(neonStripMat, 0, 0.95);
   addBox(canopy, 18.9, 0.025, 0.025, neonStripMat, 0, 4.07, 6.44, { cast: false });
   for (const s of [-1, 1]) addBox(canopy, 0.025, 0.025, 7.1, neonStripMat, s * 9.47, 4.07, 3.0, { cast: false });
-  // columns
+  // columns, base plates and anchor bolts
   for (const s of [-1, 1]) {
-    addBox(canopy, 0.8, 0.08, 0.8, M.darkMetal, s * 9.15, 0.08, 5.75);
+    addBox(canopy, 0.94, 0.08, 0.94, M.darkMetal, s * 9.15, 0.08, 5.75);
+    for (const bx of [-0.32, 0.32]) for (const bz of [-0.32, 0.32]) {
+      addCylinder(canopy, 0.025, 0.025, 0.03, M.chromeRough, s * 9.15 + bx, 0.13, 5.75 + bz, { seg: 8, cast: false });
+    }
     addBox(canopy, 0.44, 4.0, 0.44, M.metalTeal, s * 9.15, 2.08, 5.75, { radius: 0.02 });
     addBox(canopy, 0.62, 0.14, 0.62, M.metalTeal, s * 9.15, 3.99, 5.75);
     addBox(canopy, 0.7, 0.1, 0.7, M.darkMetal, s * 9.15, 0.02, 5.75);
@@ -439,6 +478,12 @@ export function buildStation(scene) {
   for (let i = 0; i < 6; i++) addBox(root, 1.28, 0.02, 0.03, M.darkMetal, -3.2, roofY + 0.12 + i * 0.1, -3.72, { cast: false });
   const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.08, 18), M.darkMetal);
   fan.position.set(-3.2, roofY + 0.84, -4.2); root.add(fan);
+  // AC fan guard, service panel and condensate pipe
+  const fanGuard = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.012, 6, 18), M.darkMetal);
+  fanGuard.rotation.x = Math.PI / 2; fanGuard.position.set(-3.2, roofY + 0.9, -4.2); root.add(fanGuard);
+  for (const ry of [0, Math.PI / 2]) addBox(root, 0.56, 0.018, 0.018, M.darkMetal, -3.2, roofY + 0.9, -4.2, { ry, cast: false });
+  addBox(root, 0.38, 0.42, 0.025, M.paintCream, -3.88, roofY + 0.46, -4.2, { cast: false });
+  addCylinder(root, 0.035, 0.035, 0.55, M.darkMetal, -2.65, roofY + 0.27, -4.7, { seg: 10 });
   addContact(root, -3.2, -4.2, 1.8, 1.3, 0.35, 0, roofY + 0.02);
   // swamp cooler
   addBox(root, 1.0, 1.15, 0.85, M.paintWhite, 1.1, roofY + 0.58, -5.9);
@@ -462,6 +507,13 @@ export function buildStation(scene) {
   // antenna
   addCylinder(root, 0.028, 0.04, 2.2, M.darkMetal, 5.0, roofY + 1.1, -6.6, { seg: 8 });
   for (const y of [1.0, 1.4, 1.8]) addBox(root, 0.9, 0.02, 0.02, M.darkMetal, 5.0, roofY + y, -6.6);
+  // roof access hatch, cable tray and drain scupper
+  addBox(root, 1.05, 0.1, 1.05, M.darkMetal, -1.2, roofY + 0.05, -6.3, { cast: false });
+  addBox(root, 0.92, 0.12, 0.92, M.paintCream, -1.2, roofY + 0.16, -6.3, { radius: 0.02, cast: false });
+  addCylinder(root, 0.018, 0.018, 0.34, M.chromeRough, -0.78, roofY + 0.35, -6.48, { seg: 8, cast: false });
+  addBox(root, 4.8, 0.06, 0.28, M.darkMetal, 1.0, roofY + 0.08, -6.8, { cast: false });
+  for (const x of [-1.1, 1.0, 3.1]) addBox(root, 0.06, 0.28, 0.06, M.darkMetal, x, roofY + 0.04, -6.8, { cast: false });
+  addBox(root, 0.45, 0.22, 0.16, M.darkMetal, 4.4, roofY + 0.08, -7.1, { cast: false });
   // roof clutter
   addTireStack(root, -7.0, -5.6, 2, 0.85);
   addBarrel(root, -6.4, -6.2, M.rust, { rot: 0.2 });
@@ -483,6 +535,7 @@ export function buildStation(scene) {
 
   // ---------------------------------------------------- roof sign tower
   const signGroup = new THREE.Group();
+  signGroup.name = 'roofSign';
   signGroup.position.z = 2.8;
   root.add(signGroup);
   const steel = M.darkMetal;
@@ -494,6 +547,14 @@ export function buildStation(scene) {
   for (const y of [5.1, 6.05, 7.3, 8.3, 9.4, 10.3]) {
     addBox(signGroup, 10.8, 0.09, 0.09, steel, 0, y, 0.42);
   }
+  // rear service ladder, with a small landing rail at the bottom
+  for (const x of [5.58, 6.02]) addBox(signGroup, 0.05, 6.55, 0.05, steel, x, 7.9, 0.18);
+  for (let i = 0; i < 14; i++) addBox(signGroup, 0.5, 0.035, 0.035, steel, 5.8, 4.88 + i * 0.46, 0.18, { cast: false });
+  for (const y of [4.82, 5.18]) addBox(signGroup, 1.25, 0.035, 0.035, steel, 5.8, y, 0.18, { cast: false });
+  // script panel perimeter frame
+  addBox(signGroup, 11.42, 0.07, 0.1, steel, 0, 7.04, 0.88);
+  addBox(signGroup, 11.42, 0.07, 0.1, steel, 0, 11.26, 0.88);
+  for (const x of [-5.69, 5.69]) addBox(signGroup, 0.07, 4.25, 0.1, steel, x, 9.15, 0.88);
   // diagonal braces
   tube([[-5.3, 4.95, 0.4], [-4.4, 5.8, 0.42], [-5.3, 6.7, 0.42]], 0.035, steel, signGroup, 12, 5);
   tube([[5.3, 4.95, 0.4], [4.4, 5.8, 0.42], [5.3, 6.7, 0.42]], 0.035, steel, signGroup, 12, 5);
@@ -569,6 +630,7 @@ export function buildStation(scene) {
 
   // ---------------------------------------------------- rear lean-to
   const shed = new THREE.Group();
+  shed.name = 'leanTo';
   root.add(shed);
   addBox(shed, 6.4, 2.7, 0.22, M.stucco, 5.0, 1.35, -7.4);
   addBox(shed, 0.22, 2.7, 2.8, M.stucco, 1.85, 1.35, -8.8);

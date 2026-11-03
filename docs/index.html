@@ -26203,7 +26203,7 @@ var SkySystem = class {
     this.envRT = null;
     this.sun = new DirectionalLight(16765090, 4.8);
     this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(4096, 4096);
+    this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.camera.left = -52;
     this.sun.shadow.camera.right = 52;
     this.sun.shadow.camera.top = 48;
@@ -26274,7 +26274,7 @@ var SkySystem = class {
     this.moon.material.opacity = MathUtils.smoothstep(t, 0.55, 0.86) * 0.85;
     this.moon.material.color.setRGB(0.88, 0.92, 1);
     this.scene.fog.density = lerp2(85e-4, 0.01, t);
-    if (force || Math.abs(t - this.lastEnvTime) > 0.035) {
+    if (force || Math.abs(t - this.lastEnvTime) > 0.08) {
       this.lastEnvTime = t;
       this.updateEnvironment();
     }
@@ -26403,6 +26403,66 @@ function buildGround(scene) {
   lip.receiveShadow = true;
   lip.castShadow = true;
   g.add(lip);
+  const jointMat = new MeshBasicMaterial({
+    color: 4867130,
+    transparent: true,
+    opacity: 0.62,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -2
+  });
+  const joint = (x, z, w, d, rot = 0) => {
+    const m = new Mesh(new BoxGeometry(w, 6e-3, d), jointMat);
+    m.position.set(x, 0.046, z);
+    m.rotation.y = rot;
+    m.renderOrder = 2;
+    g.add(m);
+  };
+  for (const z of [-0.8, 2, 4.8, 6.7]) joint(0, z, 22.6, 0.028);
+  for (const x of [-7.5, -2.5, 2.5, 7.5]) joint(x, 2.6, 0.028, 8.3);
+  const patchMat = new MeshBasicMaterial({
+    map: M.puddleAlpha,
+    transparent: true,
+    opacity: 0.42,
+    color: 1315085,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1
+  });
+  const patches = [[-13.5, 7, 2.4, 1.4, 0.1], [14.5, 4.2, 2.8, 1.2, -0.2], [3.2, 10.1, 1.8, 0.9, 0.05]];
+  for (const [x, z, sx, sz, rot] of patches) {
+    const p = new Mesh(new PlaneGeometry(sx, sz), patchMat);
+    p.rotation.x = -Math.PI / 2;
+    p.rotation.z = rot;
+    p.position.set(x, 0.018, z);
+    g.add(p);
+  }
+  const grateMat = M.darkMetal;
+  for (const [gx, gz] of [[-11.8, 10.9], [8.6, 10.9]]) {
+    const frame = new Mesh(new BoxGeometry(1.4, 0.04, 0.55), M.concrete);
+    frame.position.set(gx, 0.035, gz);
+    g.add(frame);
+    const grate = new Mesh(new BoxGeometry(1.22, 0.045, 0.4), grateMat);
+    grate.position.set(gx, 0.055, gz);
+    g.add(grate);
+    for (let i = 0; i < 7; i++) {
+      const bar = new Mesh(new BoxGeometry(0.045, 0.02, 0.38), M.blackMetal);
+      bar.position.set(gx - 0.48 + i * 0.16, 0.08, gz);
+      g.add(bar);
+    }
+  }
+  const manhole = new Mesh(new CylinderGeometry(0.42, 0.42, 0.018, 24), M.darkMetal);
+  manhole.position.set(-14.8, 0.03, 4.1);
+  g.add(manhole);
+  for (let i = 0; i < 4; i++) {
+    const slot = new Mesh(new BoxGeometry(0.32, 5e-3, 0.035), M.blackMetal);
+    slot.position.set(-14.8, 0.042, 3.85 + i * 0.16);
+    g.add(slot);
+  }
+  const utility = new Mesh(new BoxGeometry(0.62, 0.025, 0.42), M.concrete);
+  utility.position.set(12.2, 0.035, 7.2);
+  g.add(utility);
   for (const [x, z, w, d] of [[-12, 11.9, 12, 0.4], [11, 11.9, 12, 0.4]]) {
     const curb = new Mesh(new BoxGeometry(w, 0.16, d), M.concrete);
     curb.position.set(x, 0.08, z);
@@ -27030,9 +27090,20 @@ function addPlane(parent, w, h, mat, x, y, z, opts = {}) {
   const geo = new PlaneGeometry(w, h, opts.wseg ?? 1, opts.hseg ?? 1);
   return addMesh(parent, geo, mat, { ...opts, x, y, z, cast: opts.cast ?? false });
 }
+var contactMaterials = /* @__PURE__ */ new Map();
+function contactMaterial(opacity) {
+  const o = Math.min(0.85, opacity * 1.35);
+  const bucket = Math.round(o * 20) / 20;
+  let mat = contactMaterials.get(bucket);
+  if (!mat) {
+    mat = M.contact.clone();
+    mat.opacity = bucket;
+    contactMaterials.set(bucket, mat);
+  }
+  return mat;
+}
 function addContact(parent, x, z, w, d, opacity = 0.45, rot = 0, y = 0.034) {
-  const mat = M.contact.clone();
-  mat.opacity = Math.min(0.85, opacity * 1.35);
+  const mat = contactMaterial(opacity);
   const m = new Mesh(new PlaneGeometry(w * 1.12, d * 1.12), mat);
   m.rotation.x = -Math.PI / 2;
   m.rotation.z = rot;
@@ -27181,7 +27252,20 @@ function createPump(premium = false) {
     for (const x of [-0.29, 0.29]) addBox(g, 0.022, 1.66, 0.012, M.chromeRough, x, 1.02, z, { cast: false });
     for (const y of [0.22, 1.82]) addBox(g, 0.6, 0.022, 0.012, M.chromeRough, 0, y, z, { cast: false });
   }
-  for (const x of [-0.335, 0.335]) addBox(g, 0.02, 1.62, 0.02, M.chromeRough, x, 1.05, 0, { cast: false });
+  for (const x of [-0.335, 0.335]) {
+    addBox(g, 0.02, 1.62, 0.02, M.chromeRough, x, 1.05, 0, { cast: false });
+    addBox(g, 0.012, 1.12, 0.34, M.metalTeal, x * 1.04, 1.05, 0, { cast: false });
+    addBox(g, 0.024, 0.16, 0.38, M.chromeRough, x * 1.05, 1.68, 0, { cast: false });
+  }
+  for (const z of [0.262, -0.262]) {
+    for (const x of [-0.2, 0.2]) addBox(g, 0.018, 0.28, 0.012, M.chromeRough, x, 1.44, z, { cast: false });
+    for (const y of [1.3, 1.58]) addBox(g, 0.4, 0.018, 0.012, M.chromeRough, 0, y, z, { cast: false });
+  }
+  addBox(g, 0.72, 0.07, 0.54, M.paintRed, 0, 1.99, 0, { radius: 0.03 });
+  addBox(g, 0.72, 0.022, 0.54, M.chromeRough, 0, 1.84, 0, { cast: false });
+  addCylinder(g, 0.035, 0.035, 0.42, M.darkMetal, -0.27, 1.53, 0.02, { rz: Math.PI / 2, seg: 10 });
+  addBox(g, 0.1, 0.12, 0.14, M.chromeRough, -0.47, 1.53, 0.02, { radius: 0.02 });
+  addBox(g, 0.055, 0.14, 0.18, M.darkMetal, 0.35, 0.78, 0.02, { cast: false });
   addCylinder(g, 0.1, 0.13, 0.16, M.chrome, 0, 2.04, 0, { seg: 18 });
   const globeMat = new MeshPhysicalMaterial({
     color: 9247762,
@@ -27231,6 +27315,7 @@ function addPump(parent, x, z, rot = 0, premium = false) {
 }
 function createPumpIsland(x, z, premiumIndex = -1) {
   const g = new Group();
+  g.name = "pumpIsland";
   g.position.set(x, 0, z);
   addBox(g, 3.3, 0.2, 1.7, M.concrete, 0, 0.12, 0, { radius: 0.04 });
   addBox(g, 3.36, 0.04, 1.76, M.paintYellow, 0, 0.225, 0, { radius: 0.01, cast: false });
@@ -27549,8 +27634,17 @@ function createPickup() {
     lens.position.set(2.49, 1.18, z);
     g.add(lens);
   }
+  addBox(g, 0.035, 0.5, 1.28, M.chromeRough, 2.505, 1.06, 0, { radius: 0.02, cast: false });
+  addBox(g, 0.025, 0.08, 0.42, M.goldPaint, 2.525, 1.2, 0, { cast: false });
+  for (const z of [-0.62, 0.62]) {
+    const ring = new Mesh(new TorusGeometry(0.125, 0.015, 6, 18), M.chromeRough);
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(2.5, 1.18, z);
+    g.add(ring);
+  }
   addBox(g, 0.12, 0.16, 1.98, M.chrome, 2.56, 0.82, 0, { radius: 0.04 });
   addBox(g, 0.12, 0.16, 1.98, M.chrome, -2.53, 0.82, 0, { radius: 0.04 });
+  for (const z of [-0.62, 0.62]) addBox(g, 0.07, 0.32, 0.08, M.chromeRough, 2.6, 0.76, z, { radius: 0.02 });
   for (const x of [-1.35, 1.4]) for (const z of [-0.9, 0.9]) {
     const arch = new Mesh(new TorusGeometry(0.48, 0.15, 8, 16, Math.PI), body);
     arch.rotation.y = Math.PI / 2;
@@ -27568,9 +27662,16 @@ function createPickup() {
   }
   for (const z of [-0.87, 0.87]) {
     addBox(g, 0.03, 0.04, 0.22, M.chromeRough, 1, 1.45, z + (z > 0 ? 0.08 : -0.08), { cast: false });
+    addBox(g, 0.06, 0.14, 0.18, M.chromeRough, 1.06, 1.5, z + (z > 0 ? 0.08 : -0.08), { radius: 0.02, cast: false });
     addBox(g, 0.14, 0.03, 0.04, M.chromeRough, 0.4, 1.36, z + (z > 0 ? 0.06 : -0.06), { cast: false });
     addBox(g, 0.02, 0.55, 0.01, M.darkMetal, 0.4, 1.42, z + (z > 0 ? 0.04 : -0.04), { cast: false });
   }
+  addBox(g, 0.02, 0.06, 0.32, M.chromeRough, -2.42, 1.55, 0, { cast: false });
+  addCylinder(g, 0.07, 0.07, 0.025, M.chromeRough, -0.85, 1, 0.885, { rx: Math.PI / 2, seg: 12 });
+  for (const z of [-0.87, 0.87]) for (const x of [-2.15, -1.55, -0.95]) {
+    addBox(g, 0.06, 0.22, 0.035, M.darkMetal, x, 1.58, z, { cast: false });
+  }
+  addCylinder(g, 0.04, 0.04, 1, M.darkMetal, -2.05, 0.35, 0.62, { rx: Math.PI / 2, seg: 10 });
   for (const z of [-0.87, 0.87]) {
     addBox(g, 1.8, 0.03, 0.02, rust, -0.5, 0.77, z + (z > 0 ? 0.02 : -0.02), { cast: false });
     addBox(g, 0.5, 0.02, 0.15, rust, -1.3, 0.76, z + (z > 0 ? 0.1 : -0.1), { cast: false });
@@ -27719,10 +27820,18 @@ function buildStation(scene) {
     addCylinder(root, 0.16, 0.16, w - 0.3, M.corrugated, cx, 3.22, -0.28, { seg: 18, rz: Math.PI / 2 });
     for (const x of [x0 + 0.1, x1 - 0.1]) {
       addBox(root, 0.07, 3.3, 0.07, M.darkMetal, x, 1.65, -0.18);
+      for (const y of [0.45, 1.55, 2.75]) addBox(root, 0.17, 0.07, 0.12, M.darkMetal, x, y, -0.15, { cast: false });
+      addBox(root, 0.11, 0.11, 0.15, M.paintCream, x, 0.33, -0.24, { cast: false });
+    }
+    for (const x of [x0 + 0.18, x1 - 0.18]) {
+      addCylinder(root, 0.17, 0.17, 0.06, M.darkMetal, x, 3.22, -0.28, { seg: 14, rz: Math.PI / 2 });
     }
     if (premium) {
       addBox(root, w - 0.4, 0.8, 0.07, M.corrugated, cx, 2.85, -0.3);
       addBox(root, w - 0.4, 0.06, 0.1, M.darkMetal, cx, 2.45, -0.29);
+      for (let i = 0; i < 6; i++) addBox(root, w - 0.42, 0.022, 0.075, M.darkMetal, cx, 2.52 + i * 0.115, -0.295, { cast: false });
+      addBox(root, w - 0.42, 0.075, 0.1, M.rubber, cx, 2.44, -0.295, { cast: false });
+      for (const x of [cx - w * 0.3, cx + w * 0.3]) addBox(root, 0.28, 0.045, 0.05, M.chromeRough, x, 2.62, -0.265, { cast: false });
     }
     const lampY = 2.72;
     addBox(root, 0.02, 0.5, 0.02, M.darkMetal, cx, lampY + 0.3, -2.1);
@@ -27838,8 +27947,17 @@ function buildStation(scene) {
   addBox(root, 0.88, 0.08, 0.14, frameMat, -2.15, 2.34, 0);
   addBox(root, 0.06, 1.9, 0.03, M.darkMetal, -1.83, 1.1, 0.06);
   addCylinder(root, 0.018, 0.018, 0.16, M.chrome, -1.34, 1.05, 0.08, { rx: Math.PI / 2, seg: 8 });
+  for (const y of [0.42, 1.15, 1.88]) addBox(root, 0.09, 0.16, 0.035, M.chromeRough, -2.51, y, 0.055, { cast: false });
+  addBox(root, 0.76, 0.18, 0.012, M.darkMetal, -2.15, 0.28, 0.045, { cast: false });
+  addBox(root, 0.52, 0.055, 0.07, M.chromeRough, -1.9, 2.23, 0.1, { cast: false });
+  addCylinder(root, 0.012, 0.012, 0.38, M.darkMetal, -2.28, 2.24, 0.08, { rz: Math.PI / 2, seg: 6, cast: false });
   addBox(root, 1.4, 0.13, 0.6, M.concrete, -2.15, 0.08, 0.24, { cast: true });
   addContact(root, -2.15, 0.4, 1.7, 0.8, 0.35, 0, 0.03);
+  addCylinder(root, 0.012, 0.012, 0.45, M.darkMetal, -0.5, 2.9, -1.45, { seg: 6, cast: false });
+  const officeShade = new Mesh(new CylinderGeometry(0.08, 0.28, 0.16, 18, 1, true), M.paintTeal);
+  officeShade.position.set(-0.5, 2.65, -1.45);
+  officeShade.material.side = DoubleSide;
+  root.add(officeShade);
   addPlane(root, 1.05, 0.26, M.windowDecal, -0.3, 1.3, 0.03, { cast: false, transparent: true });
   const open = addPlane(root, 0.66, 0.31, M.neonOpen, 0.45, 2.3, 0.04, { cast: false });
   open.renderOrder = 3;
@@ -27910,6 +28028,7 @@ function buildStation(scene) {
   root.add(benchSeat);
   addContact(root, -8.4, 3.6, 0.7, 1.6, 0.32, 0, 0.03);
   const canopy = new Group();
+  canopy.name = "canopy";
   root.add(canopy);
   addBox(canopy, 19.5, 0.18, 7.5, canopyFascia, 0, 4.93, 3);
   addBox(canopy, 19.4, 0.12, 7.3, canopyUnderMat, 0, 4.04, 3, { cast: false });
@@ -27917,6 +28036,12 @@ function buildStation(scene) {
   addBox(canopy, 19.5, 0.16, 0.27, canopyStripe, 0, 4.3, 6.58);
   addBox(canopy, 19.5, 0.055, 0.28, M.chrome, 0, 4.16, 6.58);
   addBox(canopy, 19.5, 0.055, 0.28, M.chromeRough, 0, 4.91, 6.58);
+  addBox(canopy, 19.72, 0.08, 0.14, M.darkMetal, 0, 4.02, 6.67, { cast: false, receive: false });
+  for (const s of [-1, 1]) {
+    addCylinder(canopy, 0.055, 0.055, 3.75, M.darkMetal, s * 9.55, 2.08, 6.63, { seg: 10, cast: false });
+    addCylinder(canopy, 0.055, 0.055, 0.38, M.darkMetal, s * 9.55, 0.24, 6.44, { rx: Math.PI / 2, seg: 10 });
+    addCylinder(canopy, 0.065, 0.065, 0.12, M.chromeRough, s * 9.55, 3.98, 6.63, { seg: 10, cast: false });
+  }
   for (let i = 0; i < 10; i++) {
     const x = -8.775 + i * 1.95;
     addBox(canopy, 0.018, 0.98, 0.016, M.darkMetal, x, 4.48, 6.712, { cast: false, receive: false });
@@ -27935,6 +28060,13 @@ function buildStation(scene) {
   for (const x of [-7.6, -4.6, -1.6, 1.6, 4.6, 7.6]) {
     addBox(canopy, 0.16, 0.17, 7.1, canopyFascia, x, 3.96, 3, { cast: false });
   }
+  for (const z of [1.7, 4.55]) {
+    addBox(canopy, 18.85, 0.14, 0.14, M.darkMetal, 0, 3.99, z, { cast: false });
+  }
+  for (const s of [-1, 1]) {
+    tube([[s * 9.15, 3.45, 5.84], [s * 8.42, 3.96, 5.84]], 0.045, M.darkMetal, canopy, 10, 5);
+    tube([[s * 9.15, 3.45, 5.66], [s * 8.42, 3.96, 5.66]], 0.045, M.darkMetal, canopy, 10, 5);
+  }
   const fixturePositions = [];
   for (const x of [-6.6, -3.3, 0, 3.3, 6.6]) for (const z of [1.7, 4.6]) fixturePositions.push([x, z]);
   for (const [x, z] of fixturePositions) {
@@ -27951,7 +28083,10 @@ function buildStation(scene) {
   addBox(canopy, 18.9, 0.025, 0.025, neonStripMat, 0, 4.07, 6.44, { cast: false });
   for (const s of [-1, 1]) addBox(canopy, 0.025, 0.025, 7.1, neonStripMat, s * 9.47, 4.07, 3, { cast: false });
   for (const s of [-1, 1]) {
-    addBox(canopy, 0.8, 0.08, 0.8, M.darkMetal, s * 9.15, 0.08, 5.75);
+    addBox(canopy, 0.94, 0.08, 0.94, M.darkMetal, s * 9.15, 0.08, 5.75);
+    for (const bx of [-0.32, 0.32]) for (const bz of [-0.32, 0.32]) {
+      addCylinder(canopy, 0.025, 0.025, 0.03, M.chromeRough, s * 9.15 + bx, 0.13, 5.75 + bz, { seg: 8, cast: false });
+    }
     addBox(canopy, 0.44, 4, 0.44, M.metalTeal, s * 9.15, 2.08, 5.75, { radius: 0.02 });
     addBox(canopy, 0.62, 0.14, 0.62, M.metalTeal, s * 9.15, 3.99, 5.75);
     addBox(canopy, 0.7, 0.1, 0.7, M.darkMetal, s * 9.15, 0.02, 5.75);
@@ -28003,6 +28138,13 @@ function buildStation(scene) {
   const fan = new Mesh(new CylinderGeometry(0.27, 0.27, 0.08, 18), M.darkMetal);
   fan.position.set(-3.2, roofY + 0.84, -4.2);
   root.add(fan);
+  const fanGuard = new Mesh(new TorusGeometry(0.28, 0.012, 6, 18), M.darkMetal);
+  fanGuard.rotation.x = Math.PI / 2;
+  fanGuard.position.set(-3.2, roofY + 0.9, -4.2);
+  root.add(fanGuard);
+  for (const ry of [0, Math.PI / 2]) addBox(root, 0.56, 0.018, 0.018, M.darkMetal, -3.2, roofY + 0.9, -4.2, { ry, cast: false });
+  addBox(root, 0.38, 0.42, 0.025, M.paintCream, -3.88, roofY + 0.46, -4.2, { cast: false });
+  addCylinder(root, 0.035, 0.035, 0.55, M.darkMetal, -2.65, roofY + 0.27, -4.7, { seg: 10 });
   addContact(root, -3.2, -4.2, 1.8, 1.3, 0.35, 0, roofY + 0.02);
   addBox(root, 1, 1.15, 0.85, M.paintWhite, 1.1, roofY + 0.58, -5.9);
   for (let i = 0; i < 5; i++) addBox(root, 0.88, 0.03, 0.02, M.paintTeal, 1.1, roofY + 0.2 + i * 0.12, -5.47, { cast: false });
@@ -28022,6 +28164,12 @@ function buildStation(scene) {
   tube([[6, roofY + 0.6, -6], [6, roofY + 1.4, -6.1], [6.6, roofY + 1.1, -5.5]], 0.025, M.darkMetal, root, 16, 6);
   addCylinder(root, 0.028, 0.04, 2.2, M.darkMetal, 5, roofY + 1.1, -6.6, { seg: 8 });
   for (const y of [1, 1.4, 1.8]) addBox(root, 0.9, 0.02, 0.02, M.darkMetal, 5, roofY + y, -6.6);
+  addBox(root, 1.05, 0.1, 1.05, M.darkMetal, -1.2, roofY + 0.05, -6.3, { cast: false });
+  addBox(root, 0.92, 0.12, 0.92, M.paintCream, -1.2, roofY + 0.16, -6.3, { radius: 0.02, cast: false });
+  addCylinder(root, 0.018, 0.018, 0.34, M.chromeRough, -0.78, roofY + 0.35, -6.48, { seg: 8, cast: false });
+  addBox(root, 4.8, 0.06, 0.28, M.darkMetal, 1, roofY + 0.08, -6.8, { cast: false });
+  for (const x of [-1.1, 1, 3.1]) addBox(root, 0.06, 0.28, 0.06, M.darkMetal, x, roofY + 0.04, -6.8, { cast: false });
+  addBox(root, 0.45, 0.22, 0.16, M.darkMetal, 4.4, roofY + 0.08, -7.1, { cast: false });
   addTireStack(root, -7, -5.6, 2, 0.85);
   addBarrel(root, -6.4, -6.2, M.rust, { rot: 0.2 });
   addBarrel(root, 3.8, -6.3, M.plasticBlue, { rot: 0.7 });
@@ -28039,6 +28187,7 @@ function buildStation(scene) {
     tube([[x0, 8.2, z0], [(x0 + x1) / 2, 6.2, (z0 + z1) / 2], [x1, 4.5, z1]], 0.018, M.blackMetal, root, 22, 4);
   }
   const signGroup = new Group();
+  signGroup.name = "roofSign";
   signGroup.position.z = 2.8;
   root.add(signGroup);
   const steel = M.darkMetal;
@@ -28049,6 +28198,12 @@ function buildStation(scene) {
   for (const y of [5.1, 6.05, 7.3, 8.3, 9.4, 10.3]) {
     addBox(signGroup, 10.8, 0.09, 0.09, steel, 0, y, 0.42);
   }
+  for (const x of [5.58, 6.02]) addBox(signGroup, 0.05, 6.55, 0.05, steel, x, 7.9, 0.18);
+  for (let i = 0; i < 14; i++) addBox(signGroup, 0.5, 0.035, 0.035, steel, 5.8, 4.88 + i * 0.46, 0.18, { cast: false });
+  for (const y of [4.82, 5.18]) addBox(signGroup, 1.25, 0.035, 0.035, steel, 5.8, y, 0.18, { cast: false });
+  addBox(signGroup, 11.42, 0.07, 0.1, steel, 0, 7.04, 0.88);
+  addBox(signGroup, 11.42, 0.07, 0.1, steel, 0, 11.26, 0.88);
+  for (const x of [-5.69, 5.69]) addBox(signGroup, 0.07, 4.25, 0.1, steel, x, 9.15, 0.88);
   tube([[-5.3, 4.95, 0.4], [-4.4, 5.8, 0.42], [-5.3, 6.7, 0.42]], 0.035, steel, signGroup, 12, 5);
   tube([[5.3, 4.95, 0.4], [4.4, 5.8, 0.42], [5.3, 6.7, 0.42]], 0.035, steel, signGroup, 12, 5);
   addBox(signGroup, 6, 3.3, 0.12, M.darkMetal, 0, 6.4, 0.7);
@@ -28129,6 +28284,7 @@ function buildStation(scene) {
   });
   signGroup.add(bird);
   const shed = new Group();
+  shed.name = "leanTo";
   root.add(shed);
   addBox(shed, 6.4, 2.7, 0.22, M.stucco, 5, 1.35, -7.4);
   addBox(shed, 0.22, 2.7, 2.8, M.stucco, 1.85, 1.35, -8.8);
@@ -28765,16 +28921,28 @@ var PlanarReflection = class {
     this.hidden = [];
     this.width = 1024;
     this.heightPx = 576;
+    this._lastView = new Matrix4();
+    this._lastProj = new Matrix4();
+    this._hasFrame = false;
   }
   setSize(w, h) {
-    const rw = Math.max(256, Math.min(1280, Math.round(w * 0.55)));
-    const rh = Math.max(144, Math.min(720, Math.round(h * 0.55)));
+    const rw = Math.max(256, Math.min(1280, Math.round(w * 0.45)));
+    const rh = Math.max(144, Math.min(720, Math.round(h * 0.45)));
     if (rw === this.width && rh === this.heightPx) return;
     this.width = rw;
     this.heightPx = rh;
     this.rt.setSize(rw, rh);
+    this._hasFrame = false;
   }
-  update(camera, waterGroup) {
+  invalidate() {
+    this._hasFrame = false;
+  }
+  update(camera, waterGroup, force = false) {
+    camera.updateMatrixWorld();
+    if (!force && this._hasFrame && this._lastView.equals(camera.matrixWorld) && this._lastProj.equals(camera.projectionMatrix)) return;
+    this._lastView.copy(camera.matrixWorld);
+    this._lastProj.copy(camera.projectionMatrix);
+    this._hasFrame = true;
     const renderer = this.renderer, scene = this.scene;
     const rp = this.reflectorWorldPosition;
     const camPos = camera.getWorldPosition(this.cameraWorldPosition);
@@ -28848,23 +29016,25 @@ function buildWater(scene, reflection, anchors) {
   puddleMat.uniforms.uAlphaCut.value = 0;
   puddleMat.uniforms.uOpacity.value = 0.88;
   const puddleGeo = new PlaneGeometry(1, 1);
-  const puddles = [];
-  for (const a of anchors) {
-    const rim = new Mesh(new PlaneGeometry(a.rx * 2.35, a.rz * 2.35), ringMat);
-    rim.rotation.x = -Math.PI / 2;
-    rim.rotation.z = a.rot;
-    rim.position.set(a.x, 0.035, a.z);
-    rim.renderOrder = 1;
-    group.add(rim);
-    const p = new Mesh(puddleGeo, puddleMat);
-    p.scale.set(a.rx * 2, a.rz * 2, 1);
-    p.rotation.x = -Math.PI / 2;
-    p.rotation.z = a.rot;
-    p.position.set(a.x, 0.042, a.z);
-    p.renderOrder = 3;
-    group.add(p);
-    puddles.push(p);
-  }
+  const rimInst = new InstancedMesh(puddleGeo, ringMat, anchors.length);
+  const puddleInst = new InstancedMesh(puddleGeo, puddleMat, anchors.length);
+  rimInst.renderOrder = 1;
+  puddleInst.renderOrder = 3;
+  rimInst.frustumCulled = false;
+  puddleInst.frustumCulled = false;
+  const pdummy = new Object3D();
+  anchors.forEach((a, i) => {
+    pdummy.position.set(a.x, 0.035, a.z);
+    pdummy.rotation.set(-Math.PI / 2, 0, a.rot);
+    pdummy.scale.set(a.rx * 2.35, a.rz * 2.35, 1);
+    pdummy.updateMatrix();
+    rimInst.setMatrixAt(i, pdummy.matrix);
+    pdummy.position.y = 0.042;
+    pdummy.scale.set(a.rx * 2, a.rz * 2, 1);
+    pdummy.updateMatrix();
+    puddleInst.setMatrixAt(i, pdummy.matrix);
+  });
+  group.add(rimInst, puddleInst);
   const creekMat = makeMaterial({ alpha: false, foam: 0.8, opacity: 0.92, ripple: 0.03, deep: "#2b2018", shallow: "#4a4534" });
   creekMat.uniforms.uNormal.value = M.waterNormal;
   creekMat.uniforms.uSunDir.value.set(-0.43, 0.28, 0.86).normalize();
@@ -28942,18 +29112,23 @@ function buildWater(scene, reflection, anchors) {
     group.add(bm);
   }
   const rockMat = new MeshStandardMaterial({ color: 9135440, roughness: 0.92, metalness: 0, envMapIntensity: 0.25 });
+  const rockGeo = new DodecahedronGeometry(1, 0);
+  const rockInst = new InstancedMesh(rockGeo, rockMat, 26);
+  const rdummy = new Object3D();
   for (let i = 0; i < 26; i++) {
     const x = x0 + r() * (x1 - x0);
     const z = -14 + Math.sin(x * 0.055) * 1.9 + (r() - 0.5) * 4.2;
     const s = 0.1 + Math.pow(r(), 2) * 0.45;
-    const rock = new Mesh(new DodecahedronGeometry(s, 0), rockMat);
-    rock.position.set(x, -0.24 + s * 0.3, z);
-    rock.scale.set(1.2, 0.7, 1);
-    rock.rotation.set(r() * 3, r() * 3, r() * 3);
-    rock.castShadow = true;
-    rock.receiveShadow = true;
-    group.add(rock);
+    rdummy.position.set(x, -0.24 + s * 0.3, z);
+    rdummy.scale.set(1.2 * s, 0.7 * s, s);
+    rdummy.rotation.set(r() * 3, r() * 3, r() * 3);
+    rdummy.updateMatrix();
+    rockInst.setMatrixAt(i, rdummy.matrix);
   }
+  rockInst.castShadow = true;
+  rockInst.receiveShadow = true;
+  rockInst.frustumCulled = false;
+  group.add(rockInst);
   const allMats = [puddleMat, ringMat, creekMat];
   const waterMeshes = [];
   group.traverse((o) => {
@@ -31099,84 +31274,46 @@ var BokehShader = {
   )
 };
 
-// node_modules/three/examples/jsm/postprocessing/BokehPass.js
-var BokehPass = class extends Pass {
-  constructor(scene, camera, params) {
+// src/post.js
+var BokehDepthPass = class extends Pass {
+  constructor(depthTexture, camera, params = {}) {
     super();
-    this.scene = scene;
     this.camera = camera;
-    const focus = params.focus !== void 0 ? params.focus : 1;
-    const aperture = params.aperture !== void 0 ? params.aperture : 0.025;
-    const maxblur = params.maxblur !== void 0 ? params.maxblur : 1;
-    this.renderTargetDepth = new WebGLRenderTarget(1, 1, {
-      // will be resized later
-      minFilter: NearestFilter,
-      magFilter: NearestFilter,
-      type: HalfFloatType
+    this.depthTexture = depthTexture;
+    this.clear = true;
+    this.uniforms = UniformsUtils.clone(BokehShader.uniforms);
+    this.uniforms.tDepth.value = depthTexture;
+    this.uniforms.focus.value = params.focus ?? 20;
+    this.uniforms.aperture.value = params.aperture ?? 65e-5;
+    this.uniforms.maxblur.value = params.maxblur ?? 75e-4;
+    this.uniforms.nearClip.value = camera.near;
+    this.uniforms.farClip.value = camera.far;
+    this.material = new ShaderMaterial({
+      defines: Object.assign({}, BokehShader.defines),
+      uniforms: this.uniforms,
+      vertexShader: BokehShader.vertexShader,
+      fragmentShader: BokehShader.fragmentShader
     });
-    this.renderTargetDepth.texture.name = "BokehPass.depth";
-    this.materialDepth = new MeshDepthMaterial();
-    this.materialDepth.depthPacking = RGBADepthPacking;
-    this.materialDepth.blending = NoBlending;
-    const bokehShader = BokehShader;
-    const bokehUniforms = UniformsUtils.clone(bokehShader.uniforms);
-    bokehUniforms["tDepth"].value = this.renderTargetDepth.texture;
-    bokehUniforms["focus"].value = focus;
-    bokehUniforms["aspect"].value = camera.aspect;
-    bokehUniforms["aperture"].value = aperture;
-    bokehUniforms["maxblur"].value = maxblur;
-    bokehUniforms["nearClip"].value = camera.near;
-    bokehUniforms["farClip"].value = camera.far;
-    this.materialBokeh = new ShaderMaterial({
-      defines: Object.assign({}, bokehShader.defines),
-      uniforms: bokehUniforms,
-      vertexShader: bokehShader.vertexShader,
-      fragmentShader: bokehShader.fragmentShader
-    });
-    this.uniforms = bokehUniforms;
-    this.fsQuad = new FullScreenQuad(this.materialBokeh);
-    this._oldClearColor = new Color();
+    this.material.defines.DEPTH_PACKING = 0;
+    this.fsQuad = new FullScreenQuad(this.material);
   }
   render(renderer, writeBuffer, readBuffer) {
-    this.scene.overrideMaterial = this.materialDepth;
-    renderer.getClearColor(this._oldClearColor);
-    const oldClearAlpha = renderer.getClearAlpha();
-    const oldAutoClear = renderer.autoClear;
-    renderer.autoClear = false;
-    renderer.setClearColor(16777215);
-    renderer.setClearAlpha(1);
-    renderer.setRenderTarget(this.renderTargetDepth);
-    renderer.clear();
-    renderer.render(this.scene, this.camera);
-    this.uniforms["tColor"].value = readBuffer.texture;
-    this.uniforms["nearClip"].value = this.camera.near;
-    this.uniforms["farClip"].value = this.camera.far;
-    if (this.renderToScreen) {
-      renderer.setRenderTarget(null);
-      this.fsQuad.render(renderer);
-    } else {
-      renderer.setRenderTarget(writeBuffer);
-      renderer.clear();
-      this.fsQuad.render(renderer);
-    }
-    this.scene.overrideMaterial = null;
-    renderer.setClearColor(this._oldClearColor);
-    renderer.setClearAlpha(oldClearAlpha);
-    renderer.autoClear = oldAutoClear;
+    this.uniforms.tColor.value = readBuffer.texture;
+    this.uniforms.tDepth.value = this.depthTexture;
+    this.uniforms.nearClip.value = this.camera.near;
+    this.uniforms.farClip.value = this.camera.far;
+    renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
+    if (this.clear) renderer.clear();
+    this.fsQuad.render(renderer);
   }
   setSize(width, height) {
-    this.materialBokeh.uniforms["aspect"].value = width / height;
-    this.renderTargetDepth.setSize(width, height);
+    this.uniforms.aspect.value = width / height;
   }
   dispose() {
-    this.renderTargetDepth.dispose();
-    this.materialDepth.dispose();
-    this.materialBokeh.dispose();
+    this.material.dispose();
     this.fsQuad.dispose();
   }
 };
-
-// src/post.js
 var GradeShader = {
   uniforms: {
     tDiffuse: { value: null },
@@ -31307,8 +31444,20 @@ function buildPost(renderer, scene, camera) {
   });
   gtao.output = GTAOPass.OUTPUT.Default;
   gtao.blendIntensity = 0.86;
+  const gtaoBaseVisibility = gtao.overrideVisibility.bind(gtao);
+  gtao.overrideVisibility = function() {
+    gtaoBaseVisibility();
+    this.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const m = Array.isArray(o.material) ? o.material[0] : o.material;
+      if (!m || !m.transparent || m.depthWrite !== false) return;
+      if (m.isMeshPhysicalMaterial || m.isShaderMaterial) return;
+      this._visibilityCache.set(o, o.visible);
+      o.visible = false;
+    });
+  };
   composer.addPass(gtao);
-  const bokeh = new BokehPass(scene, camera, { focus: 20, aperture: 65e-5, maxblur: 75e-4 });
+  const bokeh = new BokehDepthPass(gtao.depthTexture, camera, { focus: 20, aperture: 65e-5, maxblur: 75e-4 });
   bokeh.enabled = true;
   composer.addPass(bokeh);
   const bloom = new UnrealBloomPass(new Vector2(innerWidth, innerHeight), 0.3, 0.85, 1);
@@ -31362,6 +31511,8 @@ function buildPost(renderer, scene, camera) {
 }
 
 // src/optimize.js
+var MERGEABLE_TRANSPARENT = (mat) => mat.transparent === true && mat.depthWrite === false && mat.blending === NormalBlending && !mat.isMeshPhysicalMaterial && // keep glass panes independently sorted
+!mat.isShaderMaterial;
 function mergeStatic(scene, roots) {
   scene.updateMatrixWorld(true);
   const groups = /* @__PURE__ */ new Map();
@@ -31376,8 +31527,8 @@ function mergeStatic(scene, roots) {
       }
       const mat = o.material;
       if (!mat || Array.isArray(mat)) return;
-      if (mat.transparent || mat.depthWrite === false || mat.blending !== NormalBlending) return;
       if (mat.isShaderMaterial) return;
+      if (mat.transparent && !MERGEABLE_TRANSPARENT(mat)) return;
       const g = o.geometry;
       if (!g || !g.attributes.position || !g.attributes.normal || !g.attributes.uv) return;
       if (!g.attributes.color && mat.vertexColors) return;
@@ -31387,7 +31538,14 @@ function mergeStatic(scene, roots) {
   for (const o of meshes) {
     const g = o.geometry;
     const attrs = Object.keys(g.attributes).sort().join(",");
-    const key = [o.material.uuid, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0, attrs, g.index ? 1 : 0].join("|");
+    const key = [
+      o.material.uuid,
+      o.castShadow ? 1 : 0,
+      o.receiveShadow ? 1 : 0,
+      attrs,
+      g.index ? 1 : 0,
+      o.renderOrder || 0
+    ].join("|");
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(o);
   }
@@ -31413,6 +31571,7 @@ function mergeStatic(scene, roots) {
     const m = new Mesh(merged, list[0].material);
     m.castShadow = list[0].castShadow;
     m.receiveShadow = list[0].receiveShadow;
+    m.renderOrder = list[0].renderOrder || 0;
     m.name = "merged:" + (list[0].material.name || list[0].material.type);
     m.matrixAutoUpdate = false;
     m.updateMatrix();
@@ -31422,7 +31581,7 @@ function mergeStatic(scene, roots) {
     }
     after++;
   }
-  return { before, after };
+  return { before, after, batches: after, meshes: meshes.length };
 }
 
 // src/fx.js
@@ -31794,7 +31953,7 @@ var SHOTS = [
     b: { pos: [5, 9.8, 39], target: [0, 3.6, 0], fov: 44 }
   }
 ];
-function createCinema({ camera, controls, setTime, post, audio, roam }) {
+function createCinema({ camera, controls, setTime, post, audio, roam, onQuality }) {
   const $2 = (s) => document.querySelector(s);
   const el = {
     shotNum: $2("#shot-num"),
@@ -32057,6 +32216,7 @@ function createCinema({ camera, controls, setTime, post, audio, roam }) {
       state.quality = state.quality === "high" ? "ultra" : "high";
       el.btnQuality.textContent = `QUALITY: ${state.quality.toUpperCase()}`;
       if (post && post.setQuality) post.setQuality(state.quality);
+      if (onQuality) onQuality(state.quality);
       toast(`RENDER QUALITY \xB7 ${state.quality.toUpperCase()}`);
     });
     el.btnSound.addEventListener("click", async () => {
@@ -33171,6 +33331,7 @@ function buildExtras(scene) {
   regLight(yardLight, 0, 22);
   addContact(root, 20.3, -2.2, 0.7, 0.7, 0.3, 0, 0.03);
   const tower = waterTower();
+  tower.name = "waterTower";
   root.add(tower);
   const beaconLight = new PointLight(16722456, 0, 16, 2);
   beaconLight.position.set(-14, 12.1, -7);
@@ -33548,14 +33709,49 @@ async function boot() {
   } } : buildExtras(scene);
   const wear = buildWear(scene);
   const atmosphere = buildAtmosphere(scene);
-  const merged = mergeStatic(scene, [cliffs, station.root, env.root, extras.root]);
+  const measureObject = (o) => {
+    if (!o) return null;
+    scene.updateMatrixWorld(true);
+    const b = new Box3().setFromObject(o);
+    const s = b.getSize(new Vector3());
+    const c = b.getCenter(new Vector3());
+    const f = (n) => Math.round(n * 1e3) / 1e3;
+    return {
+      min: b.min.toArray().map(f),
+      max: b.max.toArray().map(f),
+      size: s.toArray().map(f),
+      center: c.toArray().map(f)
+    };
+  };
+  const measurement = {
+    units: "meters",
+    generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    station: measureObject(station.root),
+    canopy: measureObject(scene.getObjectByName("canopy")),
+    roofSign: measureObject(scene.getObjectByName("roofSign")),
+    waterTower: measureObject(scene.getObjectByName("waterTower")),
+    pumpIslands: []
+  };
+  scene.traverse((o) => {
+    if (o.name === "pumpIsland") measurement.pumpIslands.push(measureObject(o));
+  });
+  const merged = mergeStatic(scene, [scene]);
   console.log("merged static meshes", merged);
   progress("FLOODING THE WASH", 0.92);
   await sleep(20);
   const reflection = new PlanarReflection(renderer, scene, 0.04);
   const water = buildWater(scene, reflection, ground.puddles);
   const post = buildPost(renderer, scene, camera);
+  let shadowDirty = true;
+  let shadowClock = 0;
+  let reflectionFrame = 0;
+  let lastShadowTime = -1;
   const setTime = (t) => {
+    if (Math.abs(t - lastShadowTime) > 4e-4) {
+      lastShadowTime = t;
+      shadowDirty = true;
+      if (reflection) reflection.invalidate();
+    }
     sky.setTime(t);
     const n = smoothstep2(0.45, 0.95, t);
     station.setNight(n);
@@ -33568,13 +33764,13 @@ async function boot() {
   setTime(0.06);
   const audio = createAmbience();
   const roam = createRoam({ camera, renderer, controls, audio });
-  const cinema = createCinema({ camera, controls, setTime, post, audio, roam });
+  const cinema = createCinema({ camera, controls, setTime, post, audio, roam, onQuality: (q) => sky.setQuality(q) });
   progress("REFLECTING THE SKY", 0.96);
   await sleep(30);
   renderer.shadowMap.needsUpdate = true;
   water.update(1 / 60, 0, camera);
-  reflection.update(camera, water.group);
   reflection.setSize(innerWidth, innerHeight);
+  reflection.update(camera, water.group, true);
   function resize() {
     const w = innerWidth, h = innerHeight;
     camera.aspect = w / h;
@@ -33599,7 +33795,8 @@ async function boot() {
     sky.followCamera(camera);
     sky.update(dt);
     atmosphere.update(dt, elapsed);
-    reflection.update(camera, water.group);
+    reflectionFrame++;
+    if ((reflectionFrame & 1) === 0) reflection.update(camera, water.group);
     water.update(dt, elapsed, camera);
     camera.getWorldDirection(camDir);
     const facing = camDir.dot(sky.sunDir);
@@ -33610,7 +33807,12 @@ async function boot() {
     } else {
       post.setSunScreen(0.5, 0.5, 0);
     }
-    renderer.shadowMap.needsUpdate = true;
+    shadowClock += dt;
+    if (shadowDirty && shadowClock >= 0.05) {
+      renderer.shadowMap.needsUpdate = true;
+      shadowDirty = false;
+      shadowClock = 0;
+    }
     post.render(dt, elapsed);
     frames++;
     fpsT += dt;
@@ -33641,10 +33843,12 @@ async function boot() {
     audio,
     roam,
     extras,
+    measurement,
     get fps() {
       return fps;
     }
   };
+  window.__measure = () => measurement;
   window.__cinema = cinema;
   window.__roam = roam;
   window.__setCam = (x, y, z, tx, ty, tz, fov2 = 40) => {

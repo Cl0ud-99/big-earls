@@ -92,7 +92,35 @@ async function boot() {
     : buildExtras(scene);
   const wear = buildWear(scene);
   const atmosphere = buildAtmosphere(scene);
-  const merged = mergeStatic(scene, [cliffs, station.root, env.root, extras.root]);
+
+  // Proportion audit used by tools/calibrate.mjs and the reference board.
+  // Measured before mergeStatic() because merging flattens the station group.
+  const measureObject = (o) => {
+    if (!o) return null;
+    scene.updateMatrixWorld(true);
+    const b = new THREE.Box3().setFromObject(o);
+    const s = b.getSize(new THREE.Vector3());
+    const c = b.getCenter(new THREE.Vector3());
+    const f = n => Math.round(n * 1000) / 1000;
+    return {
+      min: b.min.toArray().map(f),
+      max: b.max.toArray().map(f),
+      size: s.toArray().map(f),
+      center: c.toArray().map(f),
+    };
+  };
+  const measurement = {
+    units: 'meters',
+    generatedAt: new Date().toISOString(),
+    station: measureObject(station.root),
+    canopy: measureObject(scene.getObjectByName('canopy')),
+    roofSign: measureObject(scene.getObjectByName('roofSign')),
+    waterTower: measureObject(scene.getObjectByName('waterTower')),
+    pumpIslands: [],
+  };
+  scene.traverse(o => { if (o.name === 'pumpIsland') measurement.pumpIslands.push(measureObject(o)); });
+
+  const merged = mergeStatic(scene, [scene]);
   console.log('merged static meshes', merged);
   progress('FLOODING THE WASH', 0.92);
   await sleep(20);
@@ -100,7 +128,16 @@ async function boot() {
   const water = buildWater(scene, reflection, ground.puddles);
   const post = buildPost(renderer, scene, camera);
 
+  let shadowDirty = true;
+  let shadowClock = 0;
+  let reflectionFrame = 0;
+  let lastShadowTime = -1;
   const setTime = (t) => {
+    if (Math.abs(t - lastShadowTime) > 0.0004) {
+      lastShadowTime = t;
+      shadowDirty = true;
+      if (reflection) reflection.invalidate();
+    }
     sky.setTime(t);
     const n = smoothstep(0.45, 0.95, t);
     station.setNight(n);
@@ -113,7 +150,7 @@ async function boot() {
   setTime(0.06);
   const audio = createAmbience();
   const roam = createRoam({ camera, renderer, controls, audio });
-  const cinema = createCinema({ camera, controls, setTime, post, audio, roam });
+  const cinema = createCinema({ camera, controls, setTime, post, audio, roam, onQuality: (q) => sky.setQuality(q) });
 
   progress('REFLECTING THE SKY', 0.96);
   await sleep(30);
@@ -121,8 +158,8 @@ async function boot() {
   // initial shadow + reflection pass
   renderer.shadowMap.needsUpdate = true;
   water.update(1 / 60, 0, camera);
-  reflection.update(camera, water.group);
   reflection.setSize(innerWidth, innerHeight);
+  reflection.update(camera, water.group, true);
 
   function resize() {
     const w = innerWidth, h = innerHeight;
@@ -149,7 +186,11 @@ async function boot() {
     sky.followCamera(camera);
     sky.update(dt);
     atmosphere.update(dt, elapsed);
-    reflection.update(camera, water.group);
+    // The reflection is a second full scene pass. The water is a small,
+    // softly-perturbed surface, so half-rate updates are visually free and
+    // halve its draw-call cost. The static camera case is skipped entirely.
+    reflectionFrame++;
+    if ((reflectionFrame & 1) === 0) reflection.update(camera, water.group);
     water.update(dt, elapsed, camera);
     // sun glare in the grade pass when the sun is in view
     camera.getWorldDirection(camDir);
@@ -161,7 +202,15 @@ async function boot() {
     } else {
       post.setSunScreen(0.5, 0.5, 0);
     }
-    renderer.shadowMap.needsUpdate = true;
+    // Shadows only move when the time-of-day sun moves. Re-render the 4096
+    // shadow map at 20 Hz at most instead of every frame (a static scene used
+    // to pay a full extra scene pass on every frame).
+    shadowClock += dt;
+    if (shadowDirty && shadowClock >= 0.05) {
+      renderer.shadowMap.needsUpdate = true;
+      shadowDirty = false;
+      shadowClock = 0;
+    }
     post.render(dt, elapsed);
     frames++; fpsT += dt;
     if (fpsT > 1) { fps = frames / fpsT; frames = 0; fpsT = 0; window.__fps = fps; }
@@ -170,8 +219,10 @@ async function boot() {
 
   window.__app = {
     renderer, scene, camera, controls, sky, station, env, water, reflection, setTime, M, post, atmosphere, wear, cinema, audio, roam, extras,
+    measurement,
     get fps() { return fps; },
   };
+  window.__measure = () => measurement;
   window.__cinema = cinema;
   window.__roam = roam;
   window.__setCam = (x, y, z, tx, ty, tz, fov = 40) => {

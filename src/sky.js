@@ -206,7 +206,9 @@ export class SkySystem {
     // sun
     this.sun = new THREE.DirectionalLight(0xffd0a2, 4.8);
     this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(4096, 4096);
+    // HIGH uses 2048² (visually indistinguishable at this framing); ULTRA
+    // switches the map back to 4096² via setQuality().
+    this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.camera.left = -52;
     this.sun.shadow.camera.right = 52;
     this.sun.shadow.camera.top = 48;
@@ -291,7 +293,10 @@ export class SkySystem {
     this.moon.material.color.setRGB(0.88, 0.92, 1.0);
     this.scene.fog.density = lerp(0.0085, 0.0100, t);
 
-    if (force || Math.abs(t - this.lastEnvTime) > 0.035) {
+    // Rebuilding the PMREM environment is one of the few allocation-heavy
+    // operations left; 0.08 of scene time is far below what the eye can read in
+    // a moving reflection, and avoids doing it on almost every slider tick.
+    if (force || Math.abs(t - this.lastEnvTime) > 0.08) {
       this.lastEnvTime = t;
       this.updateEnvironment();
     }

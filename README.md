@@ -54,7 +54,7 @@ A single-page Three.js r170 application with three ways to see the same location
 
 ```
 procedural sky ──> PMREM environment ──> PBR reflections
-sun shadow (4096) ──┐
+sun shadow (2048 high / 4096 ultra) ──┐
 GTAO (half res) ────┼──> composite
 planar water ───────┘
 bokeh DOF ──> bloom ──> ACES + grade ──> letterbox
@@ -64,10 +64,12 @@ Details worth reading:
 
 - **Wall and metal reflections** come from a PMREM built from the same procedural sky. The canopy fascia, chrome trim, pump bodies, truck paint and window glass all pick up the horizon and the sign glow; the sign is visible in the wet forecourt as a planar reflection.
 - **The water is a real planar reflection**, not a screen-space approximation: a mirrored camera with an oblique near plane, normal-map perturbation, fresnel and distance fade. Puddles and the canyon creek share the same shader with different opacity and scale.
-- **GTAO runs at half resolution** and is composited before DOF, so contact shadows in the service bay and under the canopy survive the bokeh pass.
+- **GTAO runs at half resolution** and is composited before DOF, so contact shadows in the service bay and under the canopy survive the bokeh pass. Its normal/depth prepass skips transparent decals, which cannot contribute meaningful AO.
 - **The six shots are data** — each has its own duration, time-of-day range, camera start/end, FOV, focus distance and aperture. `jump()` can move to any shot for stills or review.
 - **The first-person controller uses simple 2D AABBs and cylinders** for the building, columns, pumps, vehicles, guardrail, bench, water-tower legs and yard fence. It is intentionally cheap so the whole scene stays playable in one tab.
-- **Static meshes are merged by material after construction**; instanced rocks and transparent surfaces are skipped. That keeps the cinema path at roughly 40–70 fps at 1600×900 on an RTX 2070 SUPER.
+- **Static meshes are merged by material after construction**, including coplanar transparent decals (contact shadows, rust streaks, road paint). Instanced and animated objects are skipped. Shadow maps are cached and only refreshed while the time-of-day sun is moving; the planar reflection updates on alternate frames and is skipped entirely when the camera is still. Puddles and creek stones are instanced instead of submitted one mesh at a time.
+- **Depth of field reuses GTAO's depth buffer** instead of drawing the scene a second time with a depth material, removing roughly 500 draw calls per frame.
+- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to 680 and roughly double the frame rate, with no visible difference in the six shots.
 
 ## The location
 
@@ -96,6 +98,8 @@ npm install
 npm run build          # src/main.js -> dist/app.js
 npm run standalone     # dist/app.js + style.css + fonts -> BigEarls-PV.html
 npm run serve          # http://127.0.0.1:5178/
+npm run perf           # fps / draw-call benchmark (with serve running)
+npm run calibrate      # reference views + proportion measurements (with serve running)
 ```
 
 The committed playable build lives at `docs/index.html`: one HTML file with the CSS, the JS bundle and all three WOFF2 fonts inlined. It works from `file://` as well as Pages, with no server and no network access.

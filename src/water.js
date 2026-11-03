@@ -139,17 +139,35 @@ export class PlanarReflection {
     this.q = new THREE.Vector4();
     this.hidden = [];
     this.width = 1024; this.heightPx = 576;
+    this._lastView = new THREE.Matrix4();
+    this._lastProj = new THREE.Matrix4();
+    this._hasFrame = false;
   }
 
   setSize(w, h) {
-    const rw = Math.max(256, Math.min(1280, Math.round(w * 0.55)));
-    const rh = Math.max(144, Math.min(720, Math.round(h * 0.55)));
+    const rw = Math.max(256, Math.min(1280, Math.round(w * 0.45)));
+    const rh = Math.max(144, Math.min(720, Math.round(h * 0.45)));
     if (rw === this.width && rh === this.heightPx) return;
     this.width = rw; this.heightPx = rh;
     this.rt.setSize(rw, rh);
+    this._hasFrame = false;
   }
 
-  update(camera, waterGroup) {
+  invalidate() {
+    this._hasFrame = false;
+  }
+
+  update(camera, waterGroup, force = false) {
+    // A perfectly still camera sees a perfectly still reflection: skip the
+    // whole mirrored scene render until either the view or projection moves.
+    camera.updateMatrixWorld();
+    if (!force && this._hasFrame &&
+        this._lastView.equals(camera.matrixWorld) &&
+        this._lastProj.equals(camera.projectionMatrix)) return;
+    this._lastView.copy(camera.matrixWorld);
+    this._lastProj.copy(camera.projectionMatrix);
+    this._hasFrame = true;
+
     const renderer = this.renderer, scene = this.scene;
     const rp = this.reflectorWorldPosition;
     const camPos = camera.getWorldPosition(this.cameraWorldPosition);
@@ -221,24 +239,27 @@ export function buildWater(scene, reflection, anchors) {
   puddleMat.uniforms.uOpacity.value = 0.88;
 
   const puddleGeo = new THREE.PlaneGeometry(1, 1);
-  const puddles = [];
-  for (const a of anchors) {
-    // wet edge / damp asphalt
-    const rim = new THREE.Mesh(new THREE.PlaneGeometry(a.rx * 2.35, a.rz * 2.35), ringMat);
-    rim.rotation.x = -Math.PI / 2;
-    rim.rotation.z = a.rot;
-    rim.position.set(a.x, 0.035, a.z);
-    rim.renderOrder = 1;
-    group.add(rim);
-    const p = new THREE.Mesh(puddleGeo, puddleMat);
-    p.scale.set(a.rx * 2, a.rz * 2, 1);
-    p.rotation.x = -Math.PI / 2;
-    p.rotation.z = a.rot;
-    p.position.set(a.x, 0.042, a.z);
-    p.renderOrder = 3;
-    group.add(p);
-    puddles.push(p);
-  }
+  // Puddles and their wet rims are identical quads at different transforms.
+  // One InstancedMesh each removes 8 draw calls from every scene pass.
+  const rimInst = new THREE.InstancedMesh(puddleGeo, ringMat, anchors.length);
+  const puddleInst = new THREE.InstancedMesh(puddleGeo, puddleMat, anchors.length);
+  rimInst.renderOrder = 1;
+  puddleInst.renderOrder = 3;
+  rimInst.frustumCulled = false;
+  puddleInst.frustumCulled = false;
+  const pdummy = new THREE.Object3D();
+  anchors.forEach((a, i) => {
+    pdummy.position.set(a.x, 0.035, a.z);
+    pdummy.rotation.set(-Math.PI / 2, 0, a.rot);
+    pdummy.scale.set(a.rx * 2.35, a.rz * 2.35, 1);
+    pdummy.updateMatrix();
+    rimInst.setMatrixAt(i, pdummy.matrix);
+    pdummy.position.y = 0.042;
+    pdummy.scale.set(a.rx * 2, a.rz * 2, 1);
+    pdummy.updateMatrix();
+    puddleInst.setMatrixAt(i, pdummy.matrix);
+  });
+  group.add(rimInst, puddleInst);
 
   // ---------------------------------------------------- creek in the wash
   const creekMat = makeMaterial({ alpha: false, foam: 0.8, opacity: 0.92, ripple: 0.03, deep: '#2b2018', shallow: '#4a4534' });
@@ -314,19 +335,25 @@ export function buildWater(scene, reflection, anchors) {
     group.add(bm);
   }
 
-  // creek stones
+  // creek stones — one instanced mesh instead of 26 individual draws
   const rockMat = new THREE.MeshStandardMaterial({ color: 0x8b6550, roughness: 0.92, metalness: 0, envMapIntensity: 0.25 });
+  const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+  const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, 26);
+  const rdummy = new THREE.Object3D();
   for (let i = 0; i < 26; i++) {
     const x = x0 + r() * (x1 - x0);
     const z = -14 + Math.sin(x * 0.055) * 1.9 + (r() - 0.5) * 4.2;
     const s = 0.1 + Math.pow(r(), 2) * 0.45;
-    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), rockMat);
-    rock.position.set(x, -0.24 + s * 0.3, z);
-    rock.scale.set(1.2, 0.7, 1);
-    rock.rotation.set(r() * 3, r() * 3, r() * 3);
-    rock.castShadow = true; rock.receiveShadow = true;
-    group.add(rock);
+    rdummy.position.set(x, -0.24 + s * 0.3, z);
+    rdummy.scale.set(1.2 * s, 0.7 * s, s);
+    rdummy.rotation.set(r() * 3, r() * 3, r() * 3);
+    rdummy.updateMatrix();
+    rockInst.setMatrixAt(i, rdummy.matrix);
   }
+  rockInst.castShadow = true;
+  rockInst.receiveShadow = true;
+  rockInst.frustumCulled = false;
+  group.add(rockInst);
 
   const allMats = [puddleMat, ringMat, creekMat];
   const waterMeshes = [];

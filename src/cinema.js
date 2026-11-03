@@ -36,7 +36,7 @@ const SHOTS = [
   },
 ];
 
-export function createCinema({ camera, controls, setTime, post, audio, roam }) {
+export function createCinema({ camera, controls, setTime, post, audio, roam, onQuality }) {
   const $ = s => document.querySelector(s);
   const el = {
     shotNum: $('#shot-num'), shotLabel: $('#shot-label'), shotBar: $('#shot-bar'),
@@ -275,6 +275,7 @@ export function createCinema({ camera, controls, setTime, post, audio, roam }) {
       state.quality = state.quality === 'high' ? 'ultra' : 'high';
       el.btnQuality.textContent = `QUALITY: ${state.quality.toUpperCase()}`;
       if (post && post.setQuality) post.setQuality(state.quality);
+      if (onQuality) onQuality(state.quality);
       toast(`RENDER QUALITY · ${state.quality.toUpperCase()}`);
     });
     el.btnSound.addEventListener('click', async () => {

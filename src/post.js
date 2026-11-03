@@ -4,7 +4,55 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
+import { BokehShader } from 'three/addons/shaders/BokehShader.js';
+
+// Depth-of-field that reuses the depth buffer GTAO already renders.
+// The stock BokehPass draws the whole scene a second time with a packed-depth
+// material (~500 extra draw calls per frame); sampling GTAO's depth texture
+// gives the same focus cue for a single full-screen pass.
+class BokehDepthPass extends Pass {
+  constructor(depthTexture, camera, params = {}) {
+    super();
+    this.camera = camera;
+    this.depthTexture = depthTexture;
+    this.clear = true;
+    this.uniforms = THREE.UniformsUtils.clone(BokehShader.uniforms);
+    this.uniforms.tDepth.value = depthTexture;
+    this.uniforms.focus.value = params.focus ?? 20;
+    this.uniforms.aperture.value = params.aperture ?? 0.00065;
+    this.uniforms.maxblur.value = params.maxblur ?? 0.0075;
+    this.uniforms.nearClip.value = camera.near;
+    this.uniforms.farClip.value = camera.far;
+    this.material = new THREE.ShaderMaterial({
+      defines: Object.assign({}, BokehShader.defines),
+      uniforms: this.uniforms,
+      vertexShader: BokehShader.vertexShader,
+      fragmentShader: BokehShader.fragmentShader,
+    });
+    this.material.defines.DEPTH_PACKING = 0; // GTAO depth is a hardware depth texture
+    this.fsQuad = new FullScreenQuad(this.material);
+  }
+
+  render(renderer, writeBuffer, readBuffer) {
+    this.uniforms.tColor.value = readBuffer.texture;
+    this.uniforms.tDepth.value = this.depthTexture;
+    this.uniforms.nearClip.value = this.camera.near;
+    this.uniforms.farClip.value = this.camera.far;
+    renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
+    if (this.clear) renderer.clear();
+    this.fsQuad.render(renderer);
+  }
+
+  setSize(width, height) {
+    this.uniforms.aspect.value = width / height;
+  }
+
+  dispose() {
+    this.material.dispose();
+    this.fsQuad.dispose();
+  }
+}
 
 const GradeShader = {
   uniforms: {
@@ -129,9 +177,25 @@ export function buildPost(renderer, scene, camera) {  renderer.toneMapping = THR
   });
   gtao.output = GTAOPass.OUTPUT.Default;
   gtao.blendIntensity = 0.86;
+  // GTAO's normal/depth prepass does not need transparent decals: contact
+  // shadows, road paint and glow cards are coplanar overlays that never
+  // contribute useful ambient occlusion. Skipping them trims another batch of
+  // draw calls from the pass without touching the main render.
+  const gtaoBaseVisibility = gtao.overrideVisibility.bind(gtao);
+  gtao.overrideVisibility = function () {
+    gtaoBaseVisibility();
+    this.scene.traverse(o => {
+      if (!o.isMesh) return;
+      const m = Array.isArray(o.material) ? o.material[0] : o.material;
+      if (!m || !m.transparent || m.depthWrite !== false) return;
+      if (m.isMeshPhysicalMaterial || m.isShaderMaterial) return;
+      this._visibilityCache.set(o, o.visible);
+      o.visible = false;
+    });
+  };
   composer.addPass(gtao);
 
-  const bokeh = new BokehPass(scene, camera, { focus: 20, aperture: 0.00065, maxblur: 0.0075 });
+  const bokeh = new BokehDepthPass(gtao.depthTexture, camera, { focus: 20, aperture: 0.00065, maxblur: 0.0075 });
   bokeh.enabled = true;
   composer.addPass(bokeh);
 

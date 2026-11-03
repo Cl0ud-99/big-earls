@@ -403,6 +403,7 @@ export function buildExtras(scene) {
 
   // ---------------------------------------------------------------- water tower
   const tower = waterTower();
+  tower.name = 'waterTower';
   root.add(tower);
   const beaconLight = new THREE.PointLight(0xff2a18, 0, 16, 2);
   beaconLight.position.set(-14, 12.1, -7);

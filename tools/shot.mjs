@@ -38,7 +38,10 @@ page.on('console', m => {
   if (!t.includes('Download the React DevTools')) console.log('[console]', t);
 });
 page.on('pageerror', e => console.log('[pageerror]', e.message, '\n', e.stack));
-await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 }).catch(e => console.log('goto:', e.message));
+await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 }).catch(e => console.log('goto:', e.message));
+// The scene keeps a rAF loop alive, so networkidle never fires; wait for the
+// app's own ready flag instead.
+await page.waitForFunction('window.__ready === true', { timeout: 120000 }).catch(e => console.log('ready:', e.message));
 await new Promise(r => setTimeout(r, waitMs));
 if (evalJs) {
   const r = await page.evaluate(evalJs).catch(e => 'EVAL ERR ' + e.message);

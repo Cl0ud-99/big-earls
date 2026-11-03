@@ -120,6 +120,53 @@ export function buildGround(scene) {
   lip.receiveShadow = true; lip.castShadow = true;
   g.add(lip);
 
+  // concrete slab expansion joints across the apron
+  const jointMat = new THREE.MeshBasicMaterial({
+    color: 0x4a443a, transparent: true, opacity: 0.62, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+  });
+  const joint = (x, z, w, d, rot = 0) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.006, d), jointMat);
+    m.position.set(x, 0.046, z);
+    m.rotation.y = rot;
+    m.renderOrder = 2;
+    g.add(m);
+  };
+  for (const z of [-0.8, 2.0, 4.8, 6.7]) joint(0, z, 22.6, 0.028);
+  for (const x of [-7.5, -2.5, 2.5, 7.5]) joint(x, 2.6, 0.028, 8.3);
+  // patched asphalt rectangles and drain grates
+  const patchMat = new THREE.MeshBasicMaterial({
+    map: M.puddleAlpha, transparent: true, opacity: 0.42, color: 0x14110d,
+    depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1,
+  });
+  const patches = [[-13.5, 7.0, 2.4, 1.4, 0.1], [14.5, 4.2, 2.8, 1.2, -0.2], [3.2, 10.1, 1.8, 0.9, 0.05]];
+  for (const [x, z, sx, sz, rot] of patches) {
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(sx, sz), patchMat);
+    p.rotation.x = -Math.PI / 2; p.rotation.z = rot;
+    p.position.set(x, 0.018, z);
+    g.add(p);
+  }
+  const grateMat = M.darkMetal;
+  for (const [gx, gz] of [[-11.8, 10.9], [8.6, 10.9]]) {
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.55), M.concrete);
+    frame.position.set(gx, 0.035, gz); g.add(frame);
+    const grate = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.045, 0.4), grateMat);
+    grate.position.set(gx, 0.055, gz); g.add(grate);
+    for (let i = 0; i < 7; i++) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.02, 0.38), M.blackMetal);
+      bar.position.set(gx - 0.48 + i * 0.16, 0.08, gz); g.add(bar);
+    }
+  }
+  // manhole cover and utility lid on the forecourt edge
+  const manhole = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.018, 24), M.darkMetal);
+  manhole.position.set(-14.8, 0.03, 4.1); g.add(manhole);
+  for (let i = 0; i < 4; i++) {
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.005, 0.035), M.blackMetal);
+    slot.position.set(-14.8, 0.042, 3.85 + i * 0.16); g.add(slot);
+  }
+  const utility = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.025, 0.42), M.concrete);
+  utility.position.set(12.2, 0.035, 7.2); g.add(utility);
+
   // driveway curb ramps
   for (const [x, z, w, d] of [[-12, 11.9, 12, 0.4], [11, 11.9, 12, 0.4]]) {
     const curb = new THREE.Mesh(new THREE.BoxGeometry(w, 0.16, d), M.concrete);

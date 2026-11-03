@@ -28,9 +28,25 @@ export function addPlane(parent, w, h, mat, x, y, z, opts = {}) {
   return addMesh(parent, geo, mat, { ...opts, x, y, z, cast: opts.cast ?? false });
 }
 
+// Contact-shadow decals all use the same texture and only differ by opacity.
+// Quantise that opacity and share one material per bucket so the static merger
+// can collapse dozens of quads into a handful of draw calls instead of cloning
+// a unique material for every prop.
+const contactMaterials = new Map();
+function contactMaterial(opacity) {
+  const o = Math.min(0.85, opacity * 1.35);
+  const bucket = Math.round(o * 20) / 20;
+  let mat = contactMaterials.get(bucket);
+  if (!mat) {
+    mat = M.contact.clone();
+    mat.opacity = bucket;
+    contactMaterials.set(bucket, mat);
+  }
+  return mat;
+}
+
 export function addContact(parent, x, z, w, d, opacity = 0.45, rot = 0, y = 0.034) {
-  const mat = M.contact.clone();
-  mat.opacity = Math.min(0.85, opacity * 1.35);
+  const mat = contactMaterial(opacity);
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.12, d * 1.12), mat);
   m.rotation.x = -Math.PI / 2;
   m.rotation.z = rot;
