@@ -102,6 +102,32 @@ function dirtGradient() {
   return makeTexture(c, { repeat: [1, 1] });
 }
 
+function dustFilmTexture() {
+  const W = 512, H = 512;
+  const c = makeCanvas(W, H);
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const r = mulberry32(614);
+  for (let i = 0; i < 110; i++) {
+    const x = r() * W, y = r() * H, rad = 8 + r() * 80;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, `rgba(196,168,132,${0.04 + r() * 0.08})`);
+    g.addColorStop(1, 'rgba(196,168,132,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  // faint wind streaks
+  for (let i = 0; i < 35; i++) {
+    ctx.strokeStyle = `rgba(210,186,150,${0.03 + r() * 0.05})`;
+    ctx.lineWidth = 1 + r() * 3;
+    ctx.beginPath();
+    ctx.moveTo(0, r() * H);
+    ctx.bezierCurveTo(W * 0.3, r() * H, W * 0.7, r() * H, W, r() * H);
+    ctx.stroke();
+  }
+  return makeTexture(c, { repeat: [1, 1] });
+}
+
 export function buildWear(scene) {
   const g = new THREE.Group();
   g.name = 'wear';
@@ -113,6 +139,8 @@ export function buildWear(scene) {
   const dirtTex = dirtGradient();
 
   const rustMat = new THREE.MeshStandardMaterial({ map: rustTex, transparent: true, depthWrite: false, roughness: 0.9, metalness: 0.1, color: 0xc98658, side: THREE.DoubleSide, alphaTest: 0.02 });
+  const dustTex = dustFilmTexture();
+  const dustMat = new THREE.MeshBasicMaterial({ map: dustTex, transparent: true, depthWrite: false, opacity: 0.38, color: 0xc7ac83, polygonOffset: true, polygonOffsetFactor: -1 });
   const crackMat = new THREE.MeshBasicMaterial({ map: crackTex, transparent: true, depthWrite: false, color: 0x141210, opacity: 0.55, alphaTest: 0.02, polygonOffset: true, polygonOffsetFactor: -2 });
   const tireMat = new THREE.MeshBasicMaterial({ map: tireTex, transparent: true, depthWrite: false, color: 0x0c0b0a, opacity: 0.35, alphaTest: 0.02, polygonOffset: true, polygonOffsetFactor: -2 });
   const oilMat = new THREE.MeshBasicMaterial({ map: T.puddleAlpha, transparent: true, depthWrite: false, color: 0x0b0a09, opacity: 0.48, alphaTest: 0.02, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -161,6 +189,18 @@ export function buildWear(scene) {
     p.renderOrder = 2;
     g.add(p);
   }
+  // dust film on horizontal ledges: canopy top, AC, swamp cooler and window sill
+  const dustPlane = (w, h, x, y, z, rot = 0) => {
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), dustMat);
+    p.rotation.x = -Math.PI / 2; p.rotation.z = rot;
+    p.position.set(x, y, z);
+    p.renderOrder = 1;
+    g.add(p);
+  };
+  dustPlane(19.2, 7.15, 0, 5.035, 3.0, 0.02);
+  dustPlane(1.35, 0.82, -3.2, 4.42 + 0.84, -4.2, -0.1);
+  dustPlane(0.9, 0.72, 1.1, 4.42 + 1.22, -5.9, 0.1);
+  dustPlane(2.35, 0.16, -0.1, 1.14, 0.16, 0);
   // oil stains on the forecourt
   const oilSpots = [
     [-4.4, 4.2, 3.4, 1.8, 0.3], [1.9, 4.0, 3.2, 1.7, -0.2], [5.0, 8.2, 2.4, 1.2, 0.6],

@@ -154,6 +154,7 @@ export function buildStation(scene) {
       // visible slat seams, bottom rubber seal and lift handles
       for (let i = 0; i < 6; i++) addBox(root, w - 0.42, 0.022, 0.075, M.darkMetal, cx, 2.52 + i * 0.115, -0.295, { cast: false });
       addBox(root, w - 0.42, 0.075, 0.1, M.rubber, cx, 2.44, -0.295, { cast: false });
+      addBox(root, w - 0.44, 0.018, 0.02, M.rust, cx, 2.42, -0.252, { cast: false });
       for (const x of [cx - w * 0.3, cx + w * 0.3]) addBox(root, 0.28, 0.045, 0.05, M.chromeRough, x, 2.62, -0.265, { cast: false });
     }
     // hanging shop lamp

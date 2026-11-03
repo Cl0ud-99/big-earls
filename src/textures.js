@@ -355,6 +355,42 @@ function stuccoTexture(tint = '#e4d8bd') {
   };
 }
 
+// ---------------------------------------------------------------- small paint details
+function paintDetailTexture(baseHex, seed = 1) {
+  const W = 512, H = 512;
+  const c = cv(W, H);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = baseHex; ctx.fillRect(0, 0, W, H);
+  const r = mulberry32(seed);
+  // broad tonal patches
+  for (let i = 0; i < 24; i++) {
+    const x = r() * W, y = r() * H, rad = 20 + r() * 100;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, r() < 0.5 ? 'rgba(255,247,224,.08)' : 'rgba(60,40,24,.06)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  // chipped paint and fine scratches
+  chips(ctx, W, H, r, { count: 62, colors: ['#8d7f6d', '#6f4c33', '#b9aa91', '#7d6a55'] });
+  for (let i = 0; i < 55; i++) {
+    const x = r() * W, y = r() * H, len = 4 + r() * 34, a = r() * 6.28;
+    ctx.strokeStyle = r() < 0.5 ? 'rgba(255,250,235,.15)' : 'rgba(56,43,32,.16)';
+    ctx.lineWidth = 0.5 + r();
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len); ctx.stroke();
+  }
+  // dirt settling along the bottom edge
+  const g2 = ctx.createLinearGradient(0, H * 0.7, 0, H);
+  g2.addColorStop(0, 'rgba(70,50,34,0)');
+  g2.addColorStop(1, 'rgba(70,50,34,.16)');
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+  grain(ctx, W, H, 2.5, seed + 4);
+  return {
+    map: texture(c),
+    normalMap: texture(normalFromCanvas(c, 0.8), { srgb: false }),
+    roughnessMap: texture(grayscaleFromCanvas(c, { lo: 0.9, hi: 0.58 }), { srgb: false }),
+  };
+}
+
 // ---------------------------------------------------------------- painted metal
 function paintedMetalTexture(baseHex, { rust = true, seed = 3 } = {}) {
   const W = 1024, H = 1024;
@@ -751,6 +787,9 @@ export async function buildSurfaceTextures(onProgress = () => {}) {
       T.metalMint = paintedMetalTexture('#9fc3bb', { seed: 12 });
       T.metalTeal = paintedMetalTexture('#3f8b8b', { seed: 13 });
       T.metalRust = paintedMetalTexture('#a05a3c', { seed: 14, rust: false });
+      T.paintCream = paintDetailTexture('#ded1b3', 21);
+      T.paintRed = paintDetailTexture('#a33d2f', 22);
+      T.paintWhite = paintDetailTexture('#d8ceb8', 23);
     }],
     ['AGING THE STEEL', () => {
       T.rust = rustTexture();

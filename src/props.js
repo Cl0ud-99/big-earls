@@ -143,6 +143,12 @@ export function createPump(premium = false) {
     for (const x of [-0.2, 0.2]) addBox(g, 0.018, 0.28, 0.012, M.chromeRough, x, 1.44, z, { cast: false });
     for (const y of [1.3, 1.58]) addBox(g, 0.4, 0.018, 0.012, M.chromeRough, 0, y, z, { cast: false });
   }
+  // weathered lower panel edges
+  for (const sx of [-1, 1]) {
+    for (let i = 0; i < 3; i++) {
+      addBox(g, 0.012, 0.08 + i * 0.03, 0.045, M.rust, sx * 0.341, 0.28 + i * 0.045, -0.12 + i * 0.11, { cast: false });
+    }
+  }
   // cast shoulder cap and hose retractor arm
   addBox(g, 0.72, 0.07, 0.54, M.paintRed, 0, 1.99, 0, { radius: 0.03 });
   addBox(g, 0.72, 0.022, 0.54, M.chromeRough, 0, 1.84, 0, { cast: false });

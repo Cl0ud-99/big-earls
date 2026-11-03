@@ -69,7 +69,8 @@ Details worth reading:
 - **The first-person controller uses simple 2D AABBs and cylinders** for the building, columns, pumps, vehicles, guardrail, bench, water-tower legs and yard fence. It is intentionally cheap so the whole scene stays playable in one tab.
 - **Static meshes are merged by material after construction**, including coplanar transparent decals (contact shadows, rust streaks, road paint). Instanced and animated objects are skipped. Shadow maps are cached and only refreshed while the time-of-day sun is moving; the planar reflection updates on alternate frames and is skipped entirely when the camera is still. Puddles and creek stones are instanced instead of submitted one mesh at a time.
 - **Depth of field reuses GTAO's depth buffer** instead of drawing the scene a second time with a depth material, removing roughly 500 draw calls per frame.
-- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to 680 and roughly double the frame rate, with no visible difference in the six shots.
+- **Painted metal shares a procedural paint-detail family**: each paint colour carries its own chips, scratches, normal map and roughness map. Dust settles on the canopy, AC and window ledges; rust gathers along pump edges and the bottoms of the bay doors.
+- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to roughly 690 and roughly double the frame rate, with no visible difference in the six shots.
 
 ## The location
 

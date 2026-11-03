@@ -93,10 +93,10 @@ export function buildMaterials() {
   M.plasticRed = std({ color: 0xa83c2e, roughness: 0.45, metalness: 0.05, envMapIntensity: 0.5 });
   M.paintBlue = std({ color: 0x3d7b8a, roughness: 0.55, metalness: 0.1, envMapIntensity: 0.4 });
   M.paintGreen = std({ color: 0x5c7a58, roughness: 0.6, metalness: 0.05, envMapIntensity: 0.35 });
-  M.paintWhite = std({ color: 0xd8ceb8, roughness: 0.6, metalness: 0.02, envMapIntensity: 0.3 });
+  M.paintWhite = std({ map: T.paintWhite.map, normalMap: T.paintWhite.normalMap, roughnessMap: T.paintWhite.roughnessMap, roughness: 1, metalness: 0.02, envMapIntensity: 0.3 });
   M.paintBlack = std({ color: 0x24211d, roughness: 0.55, metalness: 0.05, envMapIntensity: 0.3 });
-  M.paintRed = std({ color: 0xa33d2f, roughness: 0.5, metalness: 0.08, envMapIntensity: 0.45 });
-  M.paintCream = std({ color: 0xded1b3, roughness: 0.5, metalness: 0.05, envMapIntensity: 0.4 });
+  M.paintRed = std({ map: T.paintRed.map, normalMap: T.paintRed.normalMap, roughnessMap: T.paintRed.roughnessMap, roughness: 1, metalness: 0.08, envMapIntensity: 0.45 });
+  M.paintCream = std({ map: T.paintCream.map, normalMap: T.paintCream.normalMap, roughnessMap: T.paintCream.roughnessMap, roughness: 1, metalness: 0.05, envMapIntensity: 0.4 });
   M.paintTeal = std({ color: 0x4d8787, roughness: 0.48, metalness: 0.08, envMapIntensity: 0.5 });
   M.paintYellow = std({ color: 0xc79a35, roughness: 0.55, metalness: 0.08, envMapIntensity: 0.4 });
 

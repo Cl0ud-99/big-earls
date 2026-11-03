@@ -24267,6 +24267,43 @@ function stuccoTexture(tint = "#e4d8bd") {
     roughnessMap: texture(grayscaleFromCanvas(c, { lo: 0.72, hi: 0.92 }), { srgb: false })
   };
 }
+function paintDetailTexture(baseHex, seed = 1) {
+  const W = 512, H = 512;
+  const c = cv(W, H);
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, W, H);
+  const r = mulberry32(seed);
+  for (let i = 0; i < 24; i++) {
+    const x = r() * W, y = r() * H, rad = 20 + r() * 100;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, r() < 0.5 ? "rgba(255,247,224,.08)" : "rgba(60,40,24,.06)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  chips(ctx, W, H, r, { count: 62, colors: ["#8d7f6d", "#6f4c33", "#b9aa91", "#7d6a55"] });
+  for (let i = 0; i < 55; i++) {
+    const x = r() * W, y = r() * H, len = 4 + r() * 34, a = r() * 6.28;
+    ctx.strokeStyle = r() < 0.5 ? "rgba(255,250,235,.15)" : "rgba(56,43,32,.16)";
+    ctx.lineWidth = 0.5 + r();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+    ctx.stroke();
+  }
+  const g2 = ctx.createLinearGradient(0, H * 0.7, 0, H);
+  g2.addColorStop(0, "rgba(70,50,34,0)");
+  g2.addColorStop(1, "rgba(70,50,34,.16)");
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, 0, W, H);
+  grain(ctx, W, H, 2.5, seed + 4);
+  return {
+    map: texture(c),
+    normalMap: texture(normalFromCanvas(c, 0.8), { srgb: false }),
+    roughnessMap: texture(grayscaleFromCanvas(c, { lo: 0.9, hi: 0.58 }), { srgb: false })
+  };
+}
 function paintedMetalTexture(baseHex, { rust = true, seed = 3 } = {}) {
   const W = 1024, H = 1024;
   const base = tileFBM(W, H, { freqX: 4, freqY: 4, octaves: 4, seed });
@@ -24682,6 +24719,9 @@ async function buildSurfaceTextures(onProgress = () => {
       T.metalMint = paintedMetalTexture("#9fc3bb", { seed: 12 });
       T.metalTeal = paintedMetalTexture("#3f8b8b", { seed: 13 });
       T.metalRust = paintedMetalTexture("#a05a3c", { seed: 14, rust: false });
+      T.paintCream = paintDetailTexture("#ded1b3", 21);
+      T.paintRed = paintDetailTexture("#a33d2f", 22);
+      T.paintWhite = paintDetailTexture("#d8ceb8", 23);
     }],
     ["AGING THE STEEL", () => {
       T.rust = rustTexture();
@@ -25902,10 +25942,10 @@ function buildMaterials() {
   M.plasticRed = std({ color: 11025454, roughness: 0.45, metalness: 0.05, envMapIntensity: 0.5 });
   M.paintBlue = std({ color: 4029322, roughness: 0.55, metalness: 0.1, envMapIntensity: 0.4 });
   M.paintGreen = std({ color: 6060632, roughness: 0.6, metalness: 0.05, envMapIntensity: 0.35 });
-  M.paintWhite = std({ color: 14208696, roughness: 0.6, metalness: 0.02, envMapIntensity: 0.3 });
+  M.paintWhite = std({ map: T.paintWhite.map, normalMap: T.paintWhite.normalMap, roughnessMap: T.paintWhite.roughnessMap, roughness: 1, metalness: 0.02, envMapIntensity: 0.3 });
   M.paintBlack = std({ color: 2367773, roughness: 0.55, metalness: 0.05, envMapIntensity: 0.3 });
-  M.paintRed = std({ color: 10698031, roughness: 0.5, metalness: 0.08, envMapIntensity: 0.45 });
-  M.paintCream = std({ color: 14602675, roughness: 0.5, metalness: 0.05, envMapIntensity: 0.4 });
+  M.paintRed = std({ map: T.paintRed.map, normalMap: T.paintRed.normalMap, roughnessMap: T.paintRed.roughnessMap, roughness: 1, metalness: 0.08, envMapIntensity: 0.45 });
+  M.paintCream = std({ map: T.paintCream.map, normalMap: T.paintCream.normalMap, roughnessMap: T.paintCream.roughnessMap, roughness: 1, metalness: 0.05, envMapIntensity: 0.4 });
   M.paintTeal = std({ color: 5080967, roughness: 0.48, metalness: 0.08, envMapIntensity: 0.5 });
   M.paintYellow = std({ color: 13081141, roughness: 0.55, metalness: 0.08, envMapIntensity: 0.4 });
   M.signBig = phys({
@@ -27261,6 +27301,11 @@ function createPump(premium = false) {
     for (const x of [-0.2, 0.2]) addBox(g, 0.018, 0.28, 0.012, M.chromeRough, x, 1.44, z, { cast: false });
     for (const y of [1.3, 1.58]) addBox(g, 0.4, 0.018, 0.012, M.chromeRough, 0, y, z, { cast: false });
   }
+  for (const sx of [-1, 1]) {
+    for (let i = 0; i < 3; i++) {
+      addBox(g, 0.012, 0.08 + i * 0.03, 0.045, M.rust, sx * 0.341, 0.28 + i * 0.045, -0.12 + i * 0.11, { cast: false });
+    }
+  }
   addBox(g, 0.72, 0.07, 0.54, M.paintRed, 0, 1.99, 0, { radius: 0.03 });
   addBox(g, 0.72, 0.022, 0.54, M.chromeRough, 0, 1.84, 0, { cast: false });
   addCylinder(g, 0.035, 0.035, 0.42, M.darkMetal, -0.27, 1.53, 0.02, { rz: Math.PI / 2, seg: 10 });
@@ -27831,6 +27876,7 @@ function buildStation(scene) {
       addBox(root, w - 0.4, 0.06, 0.1, M.darkMetal, cx, 2.45, -0.29);
       for (let i = 0; i < 6; i++) addBox(root, w - 0.42, 0.022, 0.075, M.darkMetal, cx, 2.52 + i * 0.115, -0.295, { cast: false });
       addBox(root, w - 0.42, 0.075, 0.1, M.rubber, cx, 2.44, -0.295, { cast: false });
+      addBox(root, w - 0.44, 0.018, 0.02, M.rust, cx, 2.42, -0.252, { cast: false });
       for (const x of [cx - w * 0.3, cx + w * 0.3]) addBox(root, 0.28, 0.045, 0.05, M.chromeRough, x, 2.62, -0.265, { cast: false });
     }
     const lampY = 2.72;
@@ -31786,6 +31832,30 @@ function dirtGradient() {
   }
   return texture(c, { repeat: [1, 1] });
 }
+function dustFilmTexture() {
+  const W = 512, H = 512;
+  const c = cv(W, H);
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, W, H);
+  const r = mulberry32(614);
+  for (let i = 0; i < 110; i++) {
+    const x = r() * W, y = r() * H, rad = 8 + r() * 80;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, `rgba(196,168,132,${0.04 + r() * 0.08})`);
+    g.addColorStop(1, "rgba(196,168,132,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  for (let i = 0; i < 35; i++) {
+    ctx.strokeStyle = `rgba(210,186,150,${0.03 + r() * 0.05})`;
+    ctx.lineWidth = 1 + r() * 3;
+    ctx.beginPath();
+    ctx.moveTo(0, r() * H);
+    ctx.bezierCurveTo(W * 0.3, r() * H, W * 0.7, r() * H, W, r() * H);
+    ctx.stroke();
+  }
+  return texture(c, { repeat: [1, 1] });
+}
 function buildWear(scene) {
   const g = new Group();
   g.name = "wear";
@@ -31795,6 +31865,8 @@ function buildWear(scene) {
   const tireTex = tireTexture();
   const dirtTex = dirtGradient();
   const rustMat = new MeshStandardMaterial({ map: rustTex, transparent: true, depthWrite: false, roughness: 0.9, metalness: 0.1, color: 13207128, side: DoubleSide, alphaTest: 0.02 });
+  const dustTex = dustFilmTexture();
+  const dustMat = new MeshBasicMaterial({ map: dustTex, transparent: true, depthWrite: false, opacity: 0.38, color: 13085827, polygonOffset: true, polygonOffsetFactor: -1 });
   const crackMat = new MeshBasicMaterial({ map: crackTex, transparent: true, depthWrite: false, color: 1315344, opacity: 0.55, alphaTest: 0.02, polygonOffset: true, polygonOffsetFactor: -2 });
   const tireMat = new MeshBasicMaterial({ map: tireTex, transparent: true, depthWrite: false, color: 789258, opacity: 0.35, alphaTest: 0.02, polygonOffset: true, polygonOffsetFactor: -2 });
   const oilMat = new MeshBasicMaterial({ map: T.puddleAlpha, transparent: true, depthWrite: false, color: 723465, opacity: 0.48, alphaTest: 0.02, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -31838,6 +31910,18 @@ function buildWear(scene) {
     p.renderOrder = 2;
     g.add(p);
   }
+  const dustPlane = (w, h, x, y, z, rot = 0) => {
+    const p = new Mesh(new PlaneGeometry(w, h), dustMat);
+    p.rotation.x = -Math.PI / 2;
+    p.rotation.z = rot;
+    p.position.set(x, y, z);
+    p.renderOrder = 1;
+    g.add(p);
+  };
+  dustPlane(19.2, 7.15, 0, 5.035, 3, 0.02);
+  dustPlane(1.35, 0.82, -3.2, 4.42 + 0.84, -4.2, -0.1);
+  dustPlane(0.9, 0.72, 1.1, 4.42 + 1.22, -5.9, 0.1);
+  dustPlane(2.35, 0.16, -0.1, 1.14, 0.16, 0);
   const oilSpots = [
     [-4.4, 4.2, 3.4, 1.8, 0.3],
     [1.9, 4, 3.2, 1.7, -0.2],
