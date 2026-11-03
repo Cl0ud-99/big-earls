@@ -4,7 +4,7 @@
 
 **by DeepSeek-V4.1-flash 🐳**
 
-**Three.js r170 · single scene · six cinema shots · 100% procedural**
+**v0.0.9 · Three.js r170 · single scene · six cinema shots · 100% procedural**
 
 [**Live preview**](https://cl0ud-99.github.io/big-earls/) — runs in the browser, nothing to install.
 
@@ -25,11 +25,24 @@ No Blizzard geometry, textures, audio or other game assets are used. Every mesh,
 
 | | |
 |---|---|
-| ![dusk](docs/shots/dusk.jpg) | ![aerial](docs/shots/aerial.jpg) |
+| ![sign](docs/shots/sign.jpg) | ![service](docs/shots/service.jpg) |
+| ![pump](docs/shots/pump.jpg) | ![dusk](docs/shots/dusk.jpg) |
+
+![aerial](docs/shots/aerial.jpg)
 
 ## What it is
 
 A single-page Three.js r170 application with three ways to see the same location: a six-shot, 63-second PV timeline; an orbit/explore camera; and a free-fly / first-person walk mode with collisions, jumping and footsteps. The scene is deliberately one place — the Overwatch Route 66 stop at the edge of Deadlock Gorge — with the detail budget spent on materials, lighting and set dressing rather than map size.
+
+## About
+
+Big Earl's 0.0.9 is a single-scene procedural diorama and a six-shot short film about one roadside stop at the edge of Deadlock Gorge.
+
+- **One location, three ways in**: a 63-second, six-shot cinema timeline; an orbit/explore camera; and a first-person walk mode with collision, jumping and footsteps.
+- **Everything is generated in code**: geometry, signage, painted-metal textures, canvas-labelled props, canyon strata, water, dust and Web Audio ambience. No model files, image textures, HDRIs or audio samples.
+- **Built to be looked at closely**: hero pumps, pickup truck, canopy fascia, roof sign and service bays carry bevels, rivets, brackets, hoses, handles and edge wear; the distant mesas carry the silhouette.
+- **Runs on a 1600×900 budget of roughly 690 draw calls and 2.49M triangles**, with cached shadows, half-rate planar reflections and merged static batches.
+- Built with Three.js r170 and esbuild; the deployable page is one self-contained `docs/index.html` file that also works from `file://`.
 
 `src/` is the whole program:
 
@@ -134,11 +147,11 @@ The sun sits low and to the right, which puts the canopy edge and the pump bodie
 
 The water is the same idea: the reflection is sharp in the puddles but the normal map breaks it up just enough to read as standing water rather than a mirror. Red and blue fall off a little faster than green in the creek, so it goes olive rather than cyan.
 
-No black cloud sprites, no cursor artefacts: the V3 build hides the OS cursor over the canvas, removes the old moon sprite and the flying-bird flock, and leaves the sky to the shader, stars and sun.
+No black cloud sprites, no cursor artefacts: the v0.0.9 build hides the OS cursor over the canvas, removes the old moon sprite and the flying-bird flock, and leaves the sky to the shader, stars and sun.
 
 ## Screenshots
 
-`docs/shots/` holds the two views above, captured from the current V3 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
+`docs/shots/` holds the release views above, captured from the current v0.0.9 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
 
 ## Disclaimer
 
@@ -146,6 +159,6 @@ Unofficial fan project. **Overwatch** and **Route 66** are trademarks of Blizzar
 
 ---
 
-**Status:** V3 — cleaned vegetation pass, no sky artefacts, single-file build verified from `file://`.
+**Status:** v0.0.9 — procedural hero detail pass, paint/wear material family, visual regression verified across all six shots, single-file build verified from `file://`.
 
 **Model:** DeepSeek-V4.1-flash. **Stack:** Three.js r170 · esbuild · procedural canvas textures · Web Audio.
