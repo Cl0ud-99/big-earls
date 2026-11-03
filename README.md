@@ -101,6 +101,7 @@ npm run standalone     # dist/app.js + style.css + fonts -> BigEarls-PV.html
 npm run serve          # http://127.0.0.1:5178/
 npm run perf           # fps / draw-call benchmark (with serve running)
 npm run calibrate      # reference views + proportion measurements (with serve running)
+npm run regression     # capture all six cinema shots for visual review (with serve running)
 ```
 
 The committed playable build lives at `docs/index.html`: one HTML file with the CSS, the JS bundle and all three WOFF2 fonts inlined. It works from `file://` as well as Pages, with no server and no network access.

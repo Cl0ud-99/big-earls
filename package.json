@@ -14,6 +14,7 @@
     "shot": "node tools/shot.mjs",
     "perf": "node tools/perf.mjs",
     "calibrate": "node tools/calibrate.mjs",
+    "regression": "node tools/regression.mjs",
     "pack": "node tools/standalone.mjs",
     "standalone": "node tools/standalone.mjs"
   },
