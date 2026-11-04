@@ -21,7 +21,7 @@ await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction('window.__ready === true', { timeout: 120000 });
 
 // Play the golden-hour shot so the camera and sun are both moving.
-await page.evaluate('window.__cinema.jump(3, 0.2); window.__cinema.play();');
+await page.evaluate('window.__cinema.jump(5, 0.2); window.__cinema.play();');
 await new Promise(r => setTimeout(r, 3000));
 
 const result = await page.evaluate(async () => {

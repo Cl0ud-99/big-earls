@@ -6,7 +6,7 @@
 
 **v0.1.0 · Three.js r170 · single scene · eight cinema shots · 100% procedural**
 
-[**Live preview**](https://cl0ud-99.github.io/big-earls/) — runs in the browser, nothing to install.
+[**Live preview**](https://cl0ud-99.github.io/big-earls/) · [**DeepSeek Gallery hub**](https://cl0ud-99.github.io/deepseek-gallery/) — runs in the browser, nothing to install.
 
 A real-time, from-scratch recreation of the **Overwatch Route 66** map's roadside stop — Big Earl's 24-hour gas station at Deadlock Gorge. Blue-hour light, wet asphalt, hand-painted signs, a water tower, a fenced work yard and a roadside picnic pull-out. No imported models, no texture files, no audio samples and no Blizzard assets — every surface, sign, mesa, prop and sound is generated procedurally at load time.
 
@@ -25,10 +25,19 @@ No Blizzard geometry, textures, audio or other game assets are used. Every mesh,
 
 | | |
 |---|---|
-| ![sign](docs/shots/sign.jpg) | ![service](docs/shots/service.jpg) |
-| ![pump](docs/shots/pump.jpg) | ![dusk](docs/shots/dusk.jpg) |
+| ![sign](docs/shots/sign.jpg) | ![marquee](docs/shots/marquee.jpg) |
+| ![gas](docs/shots/gas.jpg) | ![service](docs/shots/service.jpg) |
+| ![pump](docs/shots/pump.jpg) | ![neon](docs/shots/neon.jpg) |
+| ![dusk](docs/shots/dusk.jpg) | ![aerial](docs/shots/aerial.jpg) |
 
-![aerial](docs/shots/aerial.jpg)
+## What v0.1.0 adds
+
+- **Eight-shot cinema** — ARRIVAL · THE SIGN · MARQUEE · GAS PYLON · SERVICE · GOLDEN HOUR · NEON · DEADLOCK GORGE
+- **Marquee detail** — bulb outlines around the Big Earl's wordmark plus a dedicated close-up shot
+- **GAS pylon close-up** — the roadside sign and crown read as their own character beat
+- **Night atmosphere** — brighter stars and occasional random shooting stars, including rare fireballs and double meteors
+- **Cursor polish** — the OS cursor stays visible outside pointer lock
+- **Refreshed screenshots** — all views above re-captured from the v0.1.0 build
 
 ## What it is
 
@@ -41,7 +50,7 @@ Big Earl's 0.1.0 is a single-scene procedural diorama and an eight-shot short fi
 - **One location, three ways in**: a ~78-second, eight-shot cinema timeline; an orbit/explore camera; and a first-person walk mode with collision, jumping and footsteps.
 - **Everything is generated in code**: geometry, signage, painted-metal textures, canvas-labelled props, canyon strata, water, dust and Web Audio ambience. No model files, image textures, HDRIs or audio samples.
 - **Built to be looked at closely**: hero pumps, pickup truck, canopy fascia, roof sign and service bays carry bevels, rivets, brackets, hoses, handles and edge wear; the distant mesas carry the silhouette.
-- **Runs on a 1600×900 budget of roughly 690 draw calls and 2.49M triangles**, with cached shadows, half-rate planar reflections and merged static batches.
+- **Runs on a 1600×900 budget of roughly 695 draw calls and 2.55M triangles**, with cached shadows, half-rate planar reflections and merged static batches.
 - Built with Three.js r170 and esbuild; the deployable page is one self-contained `docs/index.html` file that also works from `file://`.
 
 `src/` is the whole program:
@@ -49,7 +58,7 @@ Big Earl's 0.1.0 is a single-scene procedural diorama and an eight-shot short fi
 | File | Role |
 | --- | --- |
 | `main.js` | Boot, renderer, time-of-day system, post chain, frame loop |
-| `cinema.js` | Six-shot timeline, transitions, HUD and title/end cards |
+| `cinema.js` | Eight-shot timeline, transitions, HUD and title/end cards |
 | `roam.js` | Free-fly camera + first-person controller, collision proxies, pointer lock |
 | `sky.js` | GLSL sky dome, day/dusk/night palettes, sun / hemisphere / fill / rim lights, PMREM environment |
 | `station.js` | Canopy, pumps, office, service bays, roof sign, practical lights |
@@ -83,7 +92,7 @@ Details worth reading:
 - **Static meshes are merged by material after construction**, including coplanar transparent decals (contact shadows, rust streaks, road paint). Instanced and animated objects are skipped. Shadow maps are cached and only refreshed while the time-of-day sun is moving; the planar reflection updates on alternate frames and is skipped entirely when the camera is still. Puddles and creek stones are instanced instead of submitted one mesh at a time.
 - **Depth of field reuses GTAO's depth buffer** instead of drawing the scene a second time with a depth material, removing roughly 500 draw calls per frame.
 - **Painted metal shares a procedural paint-detail family**: each paint colour carries its own chips, scratches, normal map and roughness map. Dust settles on the canopy, AC and window ledges; rust gathers along pump edges and the bottoms of the bay doors.
-- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to roughly 690 and roughly double the frame rate, with no visible difference in the eight shots.
+- On the reference 1600×900 scene the batching and pass changes take the frame from about 2,180 draw calls to roughly 695 and roughly double the frame rate, with no visible difference in the eight shots.
 
 ## The location
 
@@ -151,7 +160,7 @@ No black cloud sprites, no cursor artefacts: the v0.1.0 build keeps the OS curso
 
 ## Screenshots
 
-`docs/shots/` holds the release views above, captured from the current v0.1.0 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
+`docs/shots/` holds the nine release views above, captured from the current v0.1.0 build. The working `shots/` directory is git-ignored — it contains the parameter sweeps and review captures.
 
 ## Disclaimer
 

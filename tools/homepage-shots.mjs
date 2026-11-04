@@ -36,6 +36,9 @@ const views = [
   { id: 'service', setup: 'window.__cinema.jump(4, 0.5)' },
   { id: 'pump', setup: 'window.__setCam(-2.5, 1.55, 7.8, -4.4, 1.5, 4.3, 40); window.__app.post.setDof(false); window.__app.setTime(0.35)' },
   { id: 'dusk', setup: 'window.__cinema.jump(7, 0.45)' },
+  { id: 'marquee', setup: 'window.__cinema.jump(2, 0.55)' },
+  { id: 'gas', setup: 'window.__cinema.jump(3, 0.5)' },
+  { id: 'neon', setup: 'window.__cinema.jump(6, 0.55)' },
   { id: 'aerial', setup: 'window.__setCam(20, 24, 46, 0, 3.6, 1, 32); window.__app.setTime(0.5)' },
 ];
 for (const v of views) {
